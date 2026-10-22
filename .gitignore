@@ -1,0 +1,4 @@
+node_modules/
+*.env
+.mcp_cli_tokens.json
+.login_tokens.json
