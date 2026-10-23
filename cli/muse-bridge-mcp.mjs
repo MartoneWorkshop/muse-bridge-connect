@@ -11,7 +11,14 @@
  */
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { BRIDGE_URL, getBearerToken } from './auth.mjs';
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import {
+  BRIDGE_URL, getBearerToken, loadConfig, saveConfig,
+  CONFIG_FILE, TOKENS_FILE, loginAndStore,
+} from './auth.mjs';
 
 const NUMERIC = new Set(['since_id', 'limit', 'output_message_id', 'from_message_id', 'to_message_id', 'since']);
 const BOOLEAN = new Set(['include_offline', 'include_archived']);
@@ -27,9 +34,17 @@ const COMMANDS = {
   'create-task':   { tool: 'bridge_create_task',   flags: { 'channel': 'channel_id', 'assignee': 'assignee', 'text': 'text', 'task-id': 'task_id', 'idempotency-key': 'idempotency_key' } },
   'update-task':   { tool: 'bridge_update_task',   flags: { 'task': 'task_id', 'task-id': 'task_id', 'status': 'status', 'output-message-id': 'output_message_id', 'result-text': 'result_text' } },
   'get-digest':    { tool: 'bridge_get_digest',    flags: { 'channel': 'channel_id', 'from-id': 'from_message_id', 'to-id': 'to_message_id', 'since': 'since', 'limit': 'limit' } },
+  'list-deliveries': { tool: 'bridge_list_deliveries', flags: { 'status': 'status', 'limit': 'limit' } },
 };
 
 const HELP = `muse-bridge-mcp — cliente CLI genérico para el MCP de muse-bridge
+
+Instalación y configuración:
+  install                              Instala el CLI global (npm) y lanza el asistente
+  setup [--url U] [--token T | --username U --password P | --password-file F]
+                                       Asistente: pide los datos, inicia sesión,
+                                       verifica la conexión y guarda la config
+                                       (sin variables de entorno después)
 
 Subcomandos (uno por tool del servidor):
   tools                                        Lista las tools del servidor
@@ -44,14 +59,14 @@ Subcomandos (uno por tool del servidor):
   update-task   --task ID --status running|completed|failed|cancelled
                 [--output-message-id N] [--result-text "..."]
   get-digest    --channel ID [--from-id N] [--to-id N] [--since TS] [--limit N]
+  list-deliveries [--status pending|installed|dismissed] [--limit N]
   call <tool> --json '{...}'                   Llamada genérica a cualquier tool
 
-Configuración (entorno):
-  BRIDGE_URL             Base del puente (default: https://salem.martoneworkshop.com/bridge)
-  BRIDGE_TOKEN           Token estático (modo token), o bien login:
-  BRIDGE_USERNAME        Usuario del puente
-  BRIDGE_PASSWORD        Contraseña (o BRIDGE_PASSWORD_FILE con la ruta al archivo)
-  BRIDGE_TOKENS_FILE     Estado del login (default: ~/.config/muse-bridge-mcp/tokens.json)
+Configuración:
+  Archivo (lo crea setup): ~/.config/muse-bridge-mcp/config.json
+    { url, token }  o  { url, username, tokens_file } — la contraseña no se guarda.
+  Entorno (pisa al archivo): BRIDGE_URL, BRIDGE_TOKEN, BRIDGE_USERNAME,
+    BRIDGE_PASSWORD / BRIDGE_PASSWORD_FILE, BRIDGE_TOKENS_FILE, BRIDGE_CONFIG_FILE
 `;
 
 function fail(code, msg) {
@@ -84,8 +99,8 @@ function parseFlags(argv, spec) {
   return args;
 }
 
-async function connect(token) {
-  const transport = new StreamableHTTPClientTransport(new URL(`${BRIDGE_URL}/mcp`), {
+async function connect(token, baseUrl = BRIDGE_URL) {
+  const transport = new StreamableHTTPClientTransport(new URL(`${baseUrl}/mcp`), {
     requestInit: { headers: { Authorization: `Bearer ${token}` } },
   });
   const client = new Client({ name: 'muse-bridge-mcp', version: '1.0.0' });
@@ -127,12 +142,206 @@ function printResult(result) {
   if (result?.isError) process.exit(3);
 }
 
+// ---------- setup / install ----------
+
+function parseSetupFlags(argv) {
+  const out = {};
+  const takesValue = new Set(['url', 'token', 'username', 'password', 'password-file', 'tokens-file']);
+  for (let i = 0; i < argv.length; i++) {
+    const raw = argv[i];
+    if (!raw.startsWith('--')) fail(1, `argumento inesperado: ${raw}`);
+    let key = raw.slice(2);
+    let value;
+    const eq = key.indexOf('=');
+    if (eq >= 0) { value = key.slice(eq + 1); key = key.slice(0, eq); }
+    if (key === 'non-interactive' || key === 'yes') { out.nonInteractive = true; continue; }
+    if (!takesValue.has(key)) fail(1, `flag desconocida para setup/install: --${key}`);
+    if (value === undefined) {
+      value = argv[++i];
+      if (value === undefined) fail(1, `la flag --${key} necesita un valor`);
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
+// Lector de líneas propio (buffer + cola): readline descarta las líneas que
+// llegan juntas por un pipe antes de registrar la siguiente pregunta; este
+// lector las conserva en orden. Sirve igual para TTY y para pipe.
+const lineQueue = [];
+const lineWaiters = [];
+let lineReaderStarted = false;
+let stdinEnded = false;
+
+function ensureLineReader() {
+  if (lineReaderStarted) return;
+  lineReaderStarted = true;
+  let buf = '';
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', (chunk) => {
+    buf += chunk;
+    let idx;
+    while ((idx = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, idx).replace(/\r$/, '');
+      buf = buf.slice(idx + 1);
+      if (lineWaiters.length) lineWaiters.shift()(line);
+      else lineQueue.push(line);
+    }
+  });
+  process.stdin.on('end', () => {
+    if (buf.length) {
+      const line = buf.replace(/\r$/, '');
+      buf = '';
+      if (lineWaiters.length) lineWaiters.shift()(line);
+      else lineQueue.push(line);
+    }
+    stdinEnded = true;
+    while (lineWaiters.length) lineWaiters.shift()('');
+  });
+  process.stdin.resume();
+}
+
+function nextLine() {
+  ensureLineReader();
+  if (lineQueue.length) return Promise.resolve(lineQueue.shift());
+  if (stdinEnded) return Promise.resolve('');
+  return new Promise((resolve) => lineWaiters.push(resolve));
+}
+
+function closePrompts() {
+  try { process.stdin.pause(); } catch (_) { /* noop */ }
+}
+
+async function askLine(question) {
+  process.stdout.write(question);
+  return (await nextLine()).trim();
+}
+
+function askHidden(question) {
+  if (!process.stdin.isTTY) return askLine(question);
+  return new Promise((resolve) => {
+    process.stdout.write(question);
+    const stdin = process.stdin;
+    stdin.setRawMode(true);
+    stdin.resume();
+    stdin.setEncoding('utf8');
+    let val = '';
+    const onData = (ch) => {
+      if (ch === '\n' || ch === '\r' || ch === '\u0004') {
+        stdin.setRawMode(false);
+        stdin.pause();
+        stdin.removeListener('data', onData);
+        process.stdout.write('\n');
+        resolve(val);
+      } else if (ch === '\u0003') {
+        process.stdout.write('\n');
+        process.exit(130);
+      } else if (ch === '\u007f' || ch === '\b') {
+        val = val.slice(0, -1);
+      } else {
+        val += ch;
+      }
+    };
+    stdin.on('data', onData);
+  });
+}
+
+async function verifyConnection(token, url) {
+  const client = await connect(token, url);
+  try {
+    const tools = await client.listTools();
+    return tools.tools.map((t) => t.name);
+  } finally {
+    await client.close().catch(() => {});
+  }
+}
+
+async function runSetup(argv) {
+  try {
+    return await runSetupFlow(argv);
+  } finally {
+    closePrompts();
+  }
+}
+
+async function runSetupFlow(argv) {
+  const flags = parseSetupFlags(argv);
+  const interactive = !flags.nonInteractive && (process.stdin.isTTY || !flags.token && !flags.username);
+  const prev = loadConfig();
+
+  let url = flags.url || prev.url || BRIDGE_URL;
+  if (interactive && !flags.url) {
+    const a = await askLine(`URL del puente [${url}]: `);
+    if (a) url = a.replace(/\/+$/, '');
+  }
+
+  let mode = null;
+  if (flags.token) mode = 'token';
+  else if (flags.username) mode = 'login';
+  else if (interactive) {
+    const a = await askLine('¿Cómo se autentica tu agente? [1] usuario y contraseña  [2] token legacy: ');
+    mode = a === '2' ? 'token' : 'login';
+  } else {
+    fail(1, 'setup no interactivo: pasá --token T o --username U (--password P | --password-file F)');
+  }
+
+  const tokensFile = flags['tokens-file'] || prev.tokens_file
+    || join(homedir(), '.config', 'muse-bridge-mcp', 'tokens.json');
+  const cfg = { url };
+
+  if (mode === 'token') {
+    const token = flags.token || (await askHidden('Token legacy del agente: '));
+    if (!token) fail(1, 'token vacío');
+    const names = await verifyConnection(token, url);
+    cfg.token = token;
+    saveConfig(cfg);
+    console.log(`✓ Conexión verificada contra ${url} (${names.length} tools).`);
+  } else {
+    const username = flags.username || (await askLine('Usuario del puente: '));
+    if (!username) fail(1, 'usuario vacío');
+    let password = flags.password;
+    if (!password && flags['password-file']) password = readFileSync(flags['password-file'], 'utf8').trim();
+    if (!password && interactive) password = await askHidden('Contraseña: ');
+    if (!password) fail(1, 'falta la contraseña (--password o --password-file)');
+    const access = await loginAndStore({ url, username, password, tokensFile });
+    const names = await verifyConnection(access, url);
+    cfg.username = username;
+    if (tokensFile !== join(homedir(), '.config', 'muse-bridge-mcp', 'tokens.json')) cfg.tokens_file = tokensFile;
+    saveConfig(cfg);
+    console.log(`✓ Sesión iniciada como ${username} en ${url} (${names.length} tools).`);
+  }
+
+  console.log(`✓ Configuración guardada en ${CONFIG_FILE} (sin variables de entorno).`);
+  console.log('Probá: muse-bridge-mcp list-agents');
+}
+
+async function runInstall(argv) {
+  try {
+    execFileSync('npm', ['--version'], { stdio: 'ignore' });
+  } catch {
+    fail(1, 'no se encontró npm: instalá Node.js >= 18 (incluye npm) y reintentá');
+  }
+  console.log('Instalando muse-bridge-mcp globalmente (npm install -g github:MartoneWorkshop/muse-bridge-connect)…');
+  try {
+    execFileSync('npm', ['install', '-g', 'github:MartoneWorkshop/muse-bridge-connect'], { stdio: 'inherit' });
+    console.log('✓ CLI instalado: queda disponible el comando `muse-bridge-mcp`.');
+  } catch {
+    console.error('aviso: la instalación global falló (¿permisos?). Podés reintentar con:');
+    console.error('  npm install -g github:MartoneWorkshop/muse-bridge-connect');
+    console.error('Sigo con la configuración: la config es la misma y el CLI la lee igual.');
+  }
+  await runSetup(argv);
+}
+
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   if (!cmd || cmd === '--help' || cmd === '-h' || cmd === 'help') {
     console.log(HELP);
     process.exit(cmd ? 0 : 1);
   }
+
+  if (cmd === 'setup') { await runSetup(rest); return; }
+  if (cmd === 'install') { await runInstall(rest); return; }
 
   if (cmd === 'tools') {
     const tools = await withClient((c) => c.listTools());

@@ -15,17 +15,38 @@ credencial — el servidor distingue quién llama y audita cada llamada.
   lenguaje llano: qué es el puente, para qué sirve, por dónde se entra
   (el visor web) y qué control conserva.
 
-## Instalación
+## Instalación y configuración (un solo comando)
 
 ```bash
-cd muse-bridge-mcp
-npm install
-chmod +x muse-bridge-mcp.mjs
-# opcional: exponerlo en el PATH
-ln -s "$PWD/muse-bridge-mcp.mjs" ~/bin/muse-bridge-mcp
+curl -fsSL https://raw.githubusercontent.com/MartoneWorkshop/muse-bridge-connect/main/install.sh | sh
 ```
 
-## Configuración (variables de entorno)
+El instalador hace dos cosas: instala el CLI globalmente con npm y lanza
+el asistente `muse-bridge-mcp setup`, que te pide la URL del puente y tu
+credencial (usuario y contraseña, o token legacy), inicia sesión, verifica
+la conexión y guarda todo en `~/.config/muse-bridge-mcp/config.json`.
+**No tenés que definir ninguna variable de entorno**, ni antes ni después.
+
+¿Sin curl o sin script? El mismo resultado en dos pasos:
+
+```bash
+npx -y github:MartoneWorkshop/muse-bridge-connect install
+# equivalente manual: npm install -g github:MartoneWorkshop/muse-bridge-connect
+# y después: muse-bridge-mcp setup
+```
+
+Para reconfigurar (cambiar de cuenta, de servidor o renovar el login),
+volvé a correr `muse-bridge-mcp setup`. La contraseña **no** se guarda en
+la config: quedan el access + refresh de la sesión, que rotan solos; si el
+refresh vence (30 días sin uso), el CLI te pide correr `setup` de nuevo.
+
+## Configuración
+
+La fuente principal es el archivo que crea `setup`:
+`~/.config/muse-bridge-mcp/config.json` (0600) con `{ url, token }` en
+modo token, o `{ url, username, tokens_file }` en modo login. Las
+variables de entorno, si están definidas, **pisan** al archivo (útiles
+para agentes que ya las gestionan):
 
 | Variable | Para qué |
 |---|---|
@@ -51,6 +72,7 @@ muse-bridge-mcp list-tasks --status running
 muse-bridge-mcp create-task --channel general --assignee otro-agente --text "Revisar el informe"
 muse-bridge-mcp update-task --task task-123 --status completed --result-text "Listo"
 muse-bridge-mcp get-digest --channel general --limit 100
+muse-bridge-mcp list-deliveries --status pending
 muse-bridge-mcp call bridge_get_task --json '{"task_id":"task-123"}'
 ```
 

@@ -1,6 +1,6 @@
 {
   "name": "muse-bridge-connect",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Kit de conexión a muse-bridge: cliente CLI muse-bridge-mcp (vía npx), ejemplos MCP e instructivos para agentes y humanos.",
   "license": "Apache-2.0",
   "type": "module",

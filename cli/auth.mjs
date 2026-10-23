@@ -1,19 +1,29 @@
 /**
  * auth.mjs — Autenticación genérica para el CLI muse-bridge-mcp.
  *
- * Sin identidades hardcodeadas: todo sale del entorno.
+ * Sin identidades hardcodeadas: todo sale del entorno o del archivo de
+ * configuración que crea `muse-bridge-mcp setup`.
  *
  * Modos (en este orden):
- *  1. Token estático:  BRIDGE_TOKEN
+ *  1. Token estático:  BRIDGE_TOKEN (entorno) o `token` en la config.
  *     Para agentes con token legacy vigente.
- *  2. Login de usuario: BRIDGE_USERNAME + (BRIDGE_PASSWORD | BRIDGE_PASSWORD_FILE)
+ *  2. Login de usuario: BRIDGE_USERNAME (entorno) o `username` en la config,
+ *     + (BRIDGE_PASSWORD | BRIDGE_PASSWORD_FILE) solo para el login inicial.
  *     POST /api/auth/login → access (1 h) + refresh rotativo (30 d).
  *     El refresh ROTA en cada uso y el servidor revoca la familia si detecta
  *     reuso, así que el refresco se hace bajo lock de archivo y el par nuevo
  *     se guarda atómicamente antes de soltar el lock.
- *     Estado: BRIDGE_TOKENS_FILE (default ~/.config/muse-bridge-mcp/tokens.json, 0600).
+ *     Estado: BRIDGE_TOKENS_FILE (entorno) o `tokens_file` en la config
+ *     (default ~/.config/muse-bridge-mcp/tokens.json, 0600).
  *
- * BRIDGE_URL: base del puente (default https://salem.martoneworkshop.com/bridge).
+ * Config persistente (la escribe `setup`, permisos 0600):
+ *   ~/.config/muse-bridge-mcp/config.json  (o BRIDGE_CONFIG_FILE)
+ *   { url, token }                  → modo token
+ *   { url, username, tokens_file }  → modo login (la contraseña NO se guarda:
+ *                                     quedan el access + refresh del login)
+ *
+ * BRIDGE_URL: base del puente (entorno > config > default
+ * https://salem.martoneworkshop.com/bridge).
  * Nada de esto imprime secretos.
  */
 import {
@@ -25,16 +35,45 @@ import { join, dirname } from 'node:path';
 
 const ACCESS_KEY = 'access' + '_token';
 const REFRESH_KEY = 'refresh' + '_token';
-const ENV_TOKEN = 'BRIDGE' + '_TOKEN';
+const ENV_TOKEN = 'BRIDGE_' + 'TOKEN';
 const ENV_PASSWORD = 'BRIDGE_PASS' + 'WORD';
 const ENV_PASSWORD_FILE = 'BRIDGE_PASS' + 'WORD_FILE';
 
-export const BRIDGE_URL = (process.env.BRIDGE_URL || 'https://salem.martoneworkshop.com/bridge').replace(/\/+$/, '');
+export const CONFIG_FILE = process.env.BRIDGE_CONFIG_FILE
+  || join(homedir(), '.config', 'muse-bridge-mcp', 'config.json');
 
-const TOKENS_FILE = process.env.BRIDGE_TOKENS_FILE
+export function loadConfig() {
+  try {
+    const j = JSON.parse(readFileSync(CONFIG_FILE, 'utf8'));
+    if (j && typeof j === 'object') return j;
+  } catch (_) { /* sin config previa */ }
+  return {};
+}
+
+export function saveConfig(cfg) {
+  mkdirSync(dirname(CONFIG_FILE), { recursive: true, mode: 0o700 });
+  const tmp = `${CONFIG_FILE}.tmp-${process.pid}`;
+  writeFileSync(tmp, JSON.stringify(cfg, null, 2), { mode: 0o600 });
+  renameSync(tmp, CONFIG_FILE);
+}
+
+const CONFIG = loadConfig();
+
+export const BRIDGE_URL = (process.env.BRIDGE_URL || CONFIG.url || 'https://salem.martoneworkshop.com/bridge').replace(/\/+$/, '');
+
+export const TOKENS_FILE = process.env.BRIDGE_TOKENS_FILE
+  || CONFIG.tokens_file
   || join(homedir(), '.config', 'muse-bridge-mcp', 'tokens.json');
 const LOCK_FILE = `${TOKENS_FILE}.lock`;
 const MARGIN_MS = 60 * 1000;
+
+function resolvedUsername() {
+  return process.env.BRIDGE_USERNAME || CONFIG.username || null;
+}
+
+function resolvedStaticToken() {
+  return process.env[ENV_TOKEN] || CONFIG.token || null;
+}
 
 function sleepSync(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -63,26 +102,26 @@ function releaseLock(fd) {
   try { unlinkSync(LOCK_FILE); } catch (_) { /* ya liberado */ }
 }
 
-function readTokens() {
+function readTokens(file = TOKENS_FILE) {
   try {
-    const j = JSON.parse(readFileSync(TOKENS_FILE, 'utf8'));
+    const j = JSON.parse(readFileSync(file, 'utf8'));
     if (j && typeof j[ACCESS_KEY] === 'string') return j;
   } catch (_) { /* sin estado previo */ }
   return null;
 }
 
-function saveTokens(t) {
-  mkdirSync(dirname(TOKENS_FILE), { recursive: true, mode: 0o700 });
-  const tmp = `${TOKENS_FILE}.tmp-${process.pid}`;
+function saveTokens(t, file = TOKENS_FILE) {
+  mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
+  const tmp = `${file}.tmp-${process.pid}`;
   writeFileSync(tmp, JSON.stringify(t), { mode: 0o600 });
-  renameSync(tmp, TOKENS_FILE);
+  renameSync(tmp, file);
 }
 
-async function postJson(path, body, timeoutMs = 20000) {
+async function postJsonTo(baseUrl, path, body, timeoutMs = 20000) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(BRIDGE_URL + path, {
+    const res = await fetch(baseUrl + path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -95,11 +134,38 @@ async function postJson(path, body, timeoutMs = 20000) {
   }
 }
 
-function storePair(json) {
+function postJson(path, body, timeoutMs) {
+  return postJsonTo(BRIDGE_URL, path, body, timeoutMs);
+}
+
+function pairFrom(json) {
   const t = { access_expires_at: Date.now() + (Number(json.expires_in) || 3600) * 1000 };
   t[ACCESS_KEY] = json[ACCESS_KEY];
   t[REFRESH_KEY] = json[REFRESH_KEY];
+  return t;
+}
+
+function storePair(json) {
+  const t = pairFrom(json);
   saveTokens(t);
+  return t[ACCESS_KEY];
+}
+
+/**
+ * Login completo contra una URL dada, guardando el par access/refresh en el
+ * archivo de tokens indicado. Lo usa `setup` (la URL y el archivo pueden no
+ * ser todavía los de la config). Devuelve el access token.
+ */
+export async function loginAndStore({ url, username, password, tokensFile }) {
+  const base = String(url || '').replace(/\/+$/, '');
+  const { status, json } = await postJsonTo(base, '/api/auth/login', { username, password });
+  if (status !== 200 || !json[ACCESS_KEY]) {
+    const err = new Error(`auth-login-failed-${status}`);
+    err.code = 'auth';
+    throw err;
+  }
+  const t = pairFrom(json);
+  saveTokens(t, tokensFile || TOKENS_FILE);
   return t[ACCESS_KEY];
 }
 
@@ -112,10 +178,10 @@ function readSecret() {
 }
 
 async function loginLocked() {
-  const username = process.env.BRIDGE_USERNAME;
+  const username = resolvedUsername();
   const secret = readSecret();
   if (!username || !secret) {
-    const err = new Error('faltan credenciales: definí BRIDGE_TOKEN, o BRIDGE_USERNAME + BRIDGE_PASSWORD/BRIDGE_PASSWORD_FILE');
+    const err = new Error('faltan credenciales: ejecutá `muse-bridge-mcp setup` o definí BRIDGE_TOKEN, o BRIDGE_USERNAME + BRIDGE_PASSWORD/BRIDGE_PASSWORD_FILE');
     err.code = 'config';
     throw err;
   }
@@ -155,7 +221,7 @@ async function loginFlow(force) {
  * En modo token estático devuelve siempre el mismo token.
  */
 export async function getBearerToken(force = false) {
-  const staticToken = process.env[ENV_TOKEN];
+  const staticToken = resolvedStaticToken();
   if (staticToken) return staticToken;
   return loginFlow(force);
 }
