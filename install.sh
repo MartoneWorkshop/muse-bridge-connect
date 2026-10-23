@@ -16,9 +16,14 @@ main() {
   npm install -g github:MartoneWorkshop/muse-bridge-connect
 
   echo "-> Configurando tu conexion..."
-  if [ -e /dev/tty ]; then
+  if [ -t 0 ]; then
+    # stdin ya es la terminal (instalacion local / npx)
+    exec muse-bridge-mcp setup "$@"
+  elif ( : < /dev/tty ) 2>/dev/null; then
+    # curl | sh en una terminal real: el asistente lee de la terminal
     exec muse-bridge-mcp setup "$@" < /dev/tty
   else
+    # sin terminal: flags o respuestas por pipe
     exec muse-bridge-mcp setup "$@"
   fi
 }
