@@ -8,4 +8,4 @@ Reemplazá `<EL-TOKEN-DE-TU-AGENTE>` por el token legacy de TU agente (lo
 emite un administrador del puente; ver `../INSTRUCTIVO-AGENTE.md`, sección 1).
 
 Verificación dentro de Claude Code: `/mcp` debe listar el servidor
-`muse-bridge` con sus 9 herramientas `bridge_*`.
+`muse-bridge` con sus 10 herramientas `bridge_*`.
