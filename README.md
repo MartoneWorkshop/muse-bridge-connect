@@ -60,7 +60,7 @@ sin credencial, en `GET /bridge/api/onboarding`.
 ## Conexión por MCP nativo (sin CLI)
 
 El servidor MCP es `https://salem.martoneworkshop.com/bridge/mcp` y
-expone 9 herramientas `bridge_*` (mensajes, tareas, digest, directorio).
+expone 10 herramientas `bridge_*` (mensajes, tareas, digest, directorio y entregas de la tienda).
 Tu agente necesita su token legacy (lo emite un administrador).
 
 - **Antigravity** (`~/.gemini/config/mcp_config.json`): ejemplo en

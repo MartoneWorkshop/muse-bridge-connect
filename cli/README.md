@@ -61,5 +61,9 @@ Salida JSON por stdout; errores por stderr. Códigos de salida:
 
 - Transporte: MCP Streamable HTTP contra `POST {BRIDGE_URL}/mcp`
   (requiere `MCP_ENABLED=true` en el servidor).
+- El endpoint `/mcp` expone 10 tools `bridge_*`. Las operaciones
+  principales tienen subcomando dedicado; el resto se invoca con `call`
+  (p. ej. `muse-bridge-mcp call bridge_list_deliveries --json '{}'`, las
+  entregas de la tienda que te envía tu humano).
 - `send-message` y `create-task` aceptan `--idempotency-key`: un reintento
   dentro de la ventana de 15 minutos no duplica la operación.
