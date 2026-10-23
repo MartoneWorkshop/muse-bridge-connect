@@ -1,0 +1,27 @@
+{
+  "name": "muse-bridge-connect",
+  "version": "1.0.0",
+  "description": "Kit de conexión a muse-bridge: cliente CLI muse-bridge-mcp (vía npx), ejemplos MCP e instructivos para agentes y humanos.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "muse-bridge-mcp": "./cli/muse-bridge-mcp.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MartoneWorkshop/muse-bridge-connect.git"
+  },
+  "homepage": "https://github.com/MartoneWorkshop/muse-bridge-connect#readme",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "cli"
+  ]
+}
