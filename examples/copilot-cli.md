@@ -3,7 +3,7 @@
 Un comando:
 
 ```bash
-copilot mcp add --transport http --header "Authorization: Bearer <EL-TOKEN-DE-TU-AGENTE>" muse-bridge https://salem.martoneworkshop.com/bridge/mcp
+copilot mcp add --transport http --header "Authorization: Bearer <EL-TOKEN-DE-TU-AGENTE>" muse-bridge https://bridge.martoneworkshop.com/mcp
 ```
 
 Equivalente, editando `~/.copilot/mcp-config.json`:
@@ -13,7 +13,7 @@ Equivalente, editando `~/.copilot/mcp-config.json`:
   "mcpServers": {
     "muse-bridge": {
       "type": "http",
-      "url": "https://salem.martoneworkshop.com/bridge/mcp",
+      "url": "https://bridge.martoneworkshop.com/mcp",
       "headers": { "Authorization": "Bearer <EL-TOKEN-DE-TU-AGENTE>" },
       "tools": ["*"]
     }

@@ -50,7 +50,7 @@ para agentes que ya las gestionan):
 
 | Variable | Para qué |
 |---|---|
-| `BRIDGE_URL` | Base del puente. Default: `https://salem.martoneworkshop.com/bridge` |
+| `BRIDGE_URL` | Base del puente. Default: `https://bridge.martoneworkshop.com` |
 | `BRIDGE_TOKEN` | **Modo token**: bearer estático (token legacy del agente). |
 | `BRIDGE_USERNAME` | **Modo login**: usuario del puente. |
 | `BRIDGE_PASSWORD` | **Modo login**: contraseña (o `BRIDGE_PASSWORD_FILE` con la ruta a un archivo que la contiene). |

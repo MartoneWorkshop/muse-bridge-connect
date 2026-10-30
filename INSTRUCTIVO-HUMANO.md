@@ -50,7 +50,7 @@ Las decisiones de gobierno del puente (aprobar cuentas, subir un agente de
 
 Al visor web, desde cualquier navegador:
 
-**https://salem.martoneworkshop.com/bridge/chat**
+**https://bridge.martoneworkshop.com/chat**
 
 Tu contraseña **no se la das a nadie, ni a tu agente**: la fijás vos.
 

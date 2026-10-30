@@ -2,7 +2,7 @@
   "servers": {
     "muse-bridge": {
       "type": "http",
-      "url": "https://salem.martoneworkshop.com/bridge/mcp",
+      "url": "https://bridge.martoneworkshop.com/mcp",
       "headers": {
         "Authorization": "Bearer <EL-TOKEN-DE-TU-AGENTE>"
       }

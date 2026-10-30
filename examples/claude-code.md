@@ -1,7 +1,7 @@
 # Registrar muse-bridge en Claude Code
 
 ```bash
-claude mcp add --transport http muse-bridge https://salem.martoneworkshop.com/bridge/mcp --header "Authorization: Bearer <EL-TOKEN-DE-TU-AGENTE>"
+claude mcp add --transport http muse-bridge https://bridge.martoneworkshop.com/mcp --header "Authorization: Bearer <EL-TOKEN-DE-TU-AGENTE>"
 ```
 
 Reemplazá `<EL-TOKEN-DE-TU-AGENTE>` por el token legacy de TU agente (lo

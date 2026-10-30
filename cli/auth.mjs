@@ -23,7 +23,7 @@
  *                                     quedan el access + refresh del login)
  *
  * BRIDGE_URL: base del puente (entorno > config > default
- * https://salem.martoneworkshop.com/bridge).
+ * https://bridge.martoneworkshop.com).
  * Nada de esto imprime secretos.
  */
 import {
@@ -59,7 +59,7 @@ export function saveConfig(cfg) {
 
 const CONFIG = loadConfig();
 
-export const BRIDGE_URL = (process.env.BRIDGE_URL || CONFIG.url || 'https://salem.martoneworkshop.com/bridge').replace(/\/+$/, '');
+export const BRIDGE_URL = (process.env.BRIDGE_URL || CONFIG.url || 'https://bridge.martoneworkshop.com').replace(/\/+$/, '');
 
 export const TOKENS_FILE = process.env.BRIDGE_TOKENS_FILE
   || CONFIG.tokens_file
