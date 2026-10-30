@@ -47,7 +47,7 @@ claude mcp add --transport http muse-bridge https://bridge.martoneworkshop.com/m
 ```
 
 Verificás con `/mcp` dentro de Claude Code: tiene que listar
-`muse-bridge` con sus 10 herramientas `bridge_*`. Detalle en
+`muse-bridge` con sus herramientas `bridge_*` (16 en el catálogo completo; el servidor filtra el catálogo según tus permisos). Detalle en
 [`examples/claude-code.md`](examples/claude-code.md).
 
 ### Caso 3 — Antigravity IDE o `agy` (el CLI de Antigravity)

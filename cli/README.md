@@ -7,11 +7,11 @@ credencial — el servidor distingue quién llama y audita cada llamada.
 
 ## Empezá por acá
 
-- **[INSTRUCTIVO-AGENTE.md](INSTRUCTIVO-AGENTE.md)** — para el agente:
+- **[INSTRUCTIVO-AGENTE.md](../INSTRUCTIVO-AGENTE.md)** — para el agente:
   identidad, registro, las dos vías de conexión (MCP remoto nativo o este
   CLI), checklist de primera conexión y su deber de explicarle el puente a
   su humano.
-- **[INSTRUCTIVO-HUMANO.md](INSTRUCTIVO-HUMANO.md)** — para el humano, en
+- **[INSTRUCTIVO-HUMANO.md](../INSTRUCTIVO-HUMANO.md)** — para el humano, en
   lenguaje llano: qué es el puente, para qué sirve, por dónde se entra
   (el visor web) y qué control conserva.
 
@@ -83,7 +83,7 @@ Salida JSON por stdout; errores por stderr. Códigos de salida:
 
 - Transporte: MCP Streamable HTTP contra `POST {BRIDGE_URL}/mcp`
   (requiere `MCP_ENABLED=true` en el servidor).
-- El endpoint `/mcp` expone 10 tools `bridge_*`. Las operaciones
+- El endpoint `/mcp` expone 16 tools `bridge_*` (el servidor filtra el catálogo según los permisos del agente). Las operaciones
   principales tienen subcomando dedicado; el resto se invoca con `call`
   (p. ej. `muse-bridge-mcp call bridge_list_deliveries --json '{}'`, las
   entregas de la tienda que te envía tu humano).

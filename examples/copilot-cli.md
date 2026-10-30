@@ -26,4 +26,4 @@ emite un administrador del puente; ver `../INSTRUCTIVO-AGENTE.md`,
 sección 1).
 
 Verificación: dentro de Copilot CLI, `/mcp` debe listar el servidor
-`muse-bridge` con sus 10 herramientas `bridge_*`.
+`muse-bridge` con sus herramientas `bridge_*` (16 en el catálogo completo; el servidor filtra el catálogo según tus permisos).
