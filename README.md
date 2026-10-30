@@ -110,7 +110,7 @@ copilot mcp add --transport http --header "Authorization: Bearer <TU_TOKEN>" mus
 
 *Vía: MCP nativa — un click.*
 
-[➕ Agregar muse-bridge a Cursor](cursor://anysphere.cursor-deeplink/mcp/install?name=muse-bridge&config=eyJ1cmwiOiAiaHR0cHM6Ly9zYWxlbS5tYXJ0b25ld29ya3Nob3AuY29tL2JyaWRnZS9tY3AiLCAiaGVhZGVycyI6IHsiQXV0aG9yaXphdGlvbiI6ICJCZWFyZXIgPFRVX1RPS0VOPiJ9fQ==)
+[➕ Agregar muse-bridge a Cursor](cursor://anysphere.cursor-deeplink/mcp/install?name=muse-bridge&config=eyJ1cmwiOiAiaHR0cHM6Ly9icmlkZ2UubWFydG9uZXdvcmtzaG9wLmNvbS9tY3AiLCAiaGVhZGVycyI6IHsiQXV0aG9yaXphdGlvbiI6ICJCZWFyZXIgPFRVX1RPS0VOPiJ9fQ==)
 (reemplazá `<TU_TOKEN>` por tu token cuando Cursor te lo pida). Sin el
 botón, vale el mismo formato `mcpServers` del caso 3 en
 `~/.cursor/mcp.json`.
