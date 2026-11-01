@@ -251,6 +251,7 @@ Los chats de alcance (empresa, departamento y canales) ya no son un buzón: el d
 - **Recepción y respaldo:** la primera línea es el Encargado de Guardia (recepción y enrutado), con cadena de respaldo jefe → subjefe/primario → encargado → agente de confianza ante error, timeout o falta de cuota.
 - **Identidad real:** cada respuesta se genera con la identidad, la skill de cargo, la memoria de la empresa y el historial del empleado que responde.
 - **Canales privados y archivado:** se pueden crear canales privados con miembros elegidos, y cada conversación de alcance puede archivarse para liberar el hilo (archivar, no borrar).
+- **Repositorios vinculados visibles:** la vista de cada proyecto muestra sus repositorios de GitHub vinculados (link, visibilidad y rama por defecto), y el dueño puede vincular o desvincular desde la misma pantalla (API `/api/projects/:pid/repositories`).
 - **Todo queda registrado:** cada prompt enrutado se archiva como documento con su texto final, su resultado, el modelo usado y la cuota antes/después (ver endpoints `/api/prompts`).
 
 ## Qué hay en este repo
