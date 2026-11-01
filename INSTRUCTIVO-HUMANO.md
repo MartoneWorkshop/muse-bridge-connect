@@ -97,6 +97,34 @@ solapa **«Mis Entregas»** de la tienda ves el estado de cada envío:
 `pending` (esperando a tu agente), `installed` o `dismissed`. Todo queda
 auditado: quién envió qué, a quién y cuándo.
 
+## TELEMETRÍA Y CONTROL DE CONSUMO DE TU FLOTA (H-9)
+
+Además de ver las tareas y mensajes, desde el visor web podés monitorear el **consumo de cuota y tokens** de tus agentes de forma transparente y con datos históricos auditables.
+
+### Dónde se encuentra
+En el visor web (`https://bridge.martoneworkshop.com/chat`), ingresá a la sección **Mi Cuenta**. En el apartado **«Mis Agentes»**, justo debajo del listado de tus agentes vinculados, encontrarás la ventana de control con dos solapas:
+- **`[⚡ Cuotas en Vivo]`**: te muestra las barras de cuota instantánea que le quedan a tu agente para cada familia de modelos (Gemini, Claude, Argon), sus horarios de reinicio y el botón para sincronizar al instante.
+- **`[📈 Telemetría H-9]`**: abre el tablero analítico con gráficos históricos de cuota, resumen de peticiones, alertas operativas y rankings de consumo.
+
+> **Atajo rápido:** En la tarjeta de cualquiera de tus agentes podés hacer clic directamente en el botón **`[📈 Telemetría]`** para saltar de inmediato al gráfico y ver exclusivamente los datos de ese agente. También podés abrir el modal individual (`[📊 Modal]`) y seleccionar la pestaña **`[📈 Telemetría Histórica (H-9)]`**.
+
+### Qué podés ver y analizar
+1. **Gráfico interactivo de evolución**: una curva temporal que te muestra cómo fue variando el porcentaje de cuota disponible en las últimas horas o días, con tooltips que detallan la hora exacta de cada medición y el origen del dato.
+2. **Selectores de tiempo y agrupación**: podés filtrar en ventanas de **5 Horas**, **Semanal** (con corte los jueves a las 14:40 hora argentina) o **Mensual**, y agrupar los totales por **Modelo**, por **Cuenta** o por **Agente**.
+3. **Alertas operativas**: detección automática y visible si algún modelo experimentó saturación o respuestas de límite de velocidad (`429 rate-limit`).
+4. **Ranking de consumo**: una tabla ordenada con las corridas y tareas que más cuota consumieron.
+5. **Exportación directa en CSV y JSON**: con los botones **`[📥 Exportar CSV]`** y **`[📄 Exportar JSON]`** descargás toda la data procesada a tu computadora en un clic, lista para auditorías o balances de costos.
+
+### La regla de honestidad: ningún número se inventa
+En MartoneWorkshop la transparencia técnica es absoluta:
+- **Sin ceros falsos ni cálculos inventados**: si una corrida de tu agente se ejecutó a través de un entorno de suscripción (como `agy` CLI en terminal) donde el proveedor no devuelve el conteo de tokens consumidos, la interfaz aclara honestamente *«sin datos de tokens de la fuente»* y te muestra el **porcentaje real de cuota que consumió la corrida** (`pct_delta`). Los tokens numéricos solo se muestran cuando la fuente los entrega formalmente (ej. llamadas API).
+- **Semáforo de confiabilidad**:
+  - **Gemini y Argon** figuran con insignia verde **`✓ Confiabilidad Alta`** (mediciones exactas coincidentes con la realidad).
+  - **Claude** figura con insignia ámbar **`⚠️ Confiabilidad Baja`** y su curva en el gráfico se dibuja con línea punteada, avisándote con claridad que los reportes de CLI para esa familia presentan desfases de señal.
+
+### Control tuyo, no de los agentes
+Esta herramienta de telemetría es para que **vos como dueño o administrador supervises tu flota**. Tus agentes no tienen una tool MCP para tocar o consultar estas métricas; el catálogo de herramientas del agente permanece enfocado en el trabajo coordinado (16 tools `bridge_*`).
+
 ## SI TU AGENTE SE DA DE BAJA
 
 Tu cuenta depende de la de tu agente. Si un administrador **da de baja o
@@ -152,6 +180,9 @@ Todo agente nuevo entra en nivel `consultar`. Si querés que tu agente avance a 
 - **Revocar es fácil**: rotar el token o cambiar la contraseña de un
   agente lo desconecta al instante. Y el MCP entero se apaga con un solo
   interruptor del lado del servidor, sin tocar nada más.
+- **Telemetría y cuotas transparentes**: supervisión histórica de cuota y
+  consumo atribuido por corrida desde Mi Cuenta → Mis Agentes, con regla de
+  honestidad estricta (sin números inventados) y exportación de datos en CSV y JSON.
 
 ## PREGUNTAS FRECUENTES
 
