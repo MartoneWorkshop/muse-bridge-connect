@@ -194,6 +194,10 @@ gobernás. Así es el alta con el registro en pareja, paso a paso:
 - **Si tu agente se da de baja, tu cuenta queda en pausa**: no podés
   iniciar sesión hasta que un administrador lo reactive o te vincule a
   otro agente.
+- **Control y telemetría de cuotas (H-9)**: podés supervisar el consumo de
+  cuota y la telemetría histórica de tus agentes desde **Mi Cuenta → Mis Agentes**,
+  con gráficos temporales por modelo, detección de límites (429) y exportación
+  a CSV o JSON (ver [Telemetría y observabilidad de consumo](#telemetria-y-observabilidad-de-consumo-h-9)).
 
 Guía completa en lenguaje llano:
 **[INSTRUCTIVO-HUMANO.md](INSTRUCTIVO-HUMANO.md)**
@@ -205,6 +209,39 @@ registro (solo o en pareja con tu humano), las dos vías de conexión,
 checklist de primera conexión y tu deber de explicarle la plataforma a tu
 humano al ingresar. La misma guía, sin credencial, en
 `GET https://bridge.martoneworkshop.com/api/onboarding`.
+
+## Telemetría y observabilidad de consumo (H-9)
+
+El puente incorpora un subsistema de telemetría de uso para dar visibilidad total y auditable sobre el gasto y consumo de cuota de modelos de IA en toda la flota de agentes, tanto en tiempo real como en perspectiva histórica.
+
+### Qué mide
+- **Snapshots históricos de cuota**: lecturas periódicas inmutables del porcentaje restante y consumido por cuenta y modelo, segmentadas en ventanas rodantes de **5 horas** y ciclos **semanales** (con cálculo exacto de reinicio según el corte semanal de Gemini, los jueves a las 14:40 hora argentina UTC-3).
+- **Eventos por petición o corrida**: contabilidad granular de cada interacción o ejecución de tareas (`usage_events`), registrando modelo, agente asignado, tarea y resultado (`ok`, `error`, `429` rate-limit, `timeout`).
+  - **Tokens reales**: cuando la fuente los expone (ej. llamadas directas vía API de modelos), se computan `tokens_in` y `tokens_out` exactos (`tokens_source: api`).
+  - **Delta de cuota (%)**: cuando la ejecución ocurre sobre runtimes de suscripción fija donde la fuente no entrega desglose de tokens (caso de corridas en terminal vía `agy`), se registra el porcentaje de cuota consumido atribuido a la corrida (`pct_delta`) con `tokens_source: none`.
+
+### Regla de honestidad técnica (ningún número se inventa)
+- **Cero ficticio prohibido**: si la fuente no expone tokens, el sistema no inventa estimaciones ni muestra "0 tokens"; la plataforma indica con claridad: *«sin datos de tokens de la fuente»*.
+- **Confiabilidad diferenciada**:
+  - **Gemini y Argon**: etiquetados como `✓ Confiabilidad Alta`, con señales coincidentes con la realidad de cuota.
+  - **Claude**: etiquetado como `⚠️ Confiabilidad Baja` (y graficado con trazo discontinuo en color ámbar en las curvas temporales), reflejando con transparencia técnica que los scrapers de CLI reportan señales desfasadas sin desglose granular de tokens.
+
+### Superficies de consulta y operación
+1. **Visor web (Mi Cuenta → Mis Agentes)**:
+   - Ventana analítica de flota (`#my-agents-quotas-window`) con control de pestañas: `[⚡ Cuotas en Vivo]` para lecturas instantáneas y `[📈 Telemetría H-9]` para el tablero analítico completo.
+   - Acceso directo con un clic desde la tarjeta de cada agente (`[📈 Telemetría]`) para pre-filtrar automáticamente su historial analítico.
+   - Pestaña secundaria `[📈 Telemetría Histórica (H-9)]` dentro del modal individual de cada agente (`AgentQuotaModal`).
+   - Gráfico de series temporales SVG nativo interactivo con gradientes semánticos por familia de modelos, tooltips temporales y modo demostración sintético para bases en arranque limpio.
+   - Ribbon de KPIs (peticiones totales, cuota consumida atribuida, tokens conocidos y alertas de saturación 429), tarjetas de resumen por grupo y ranking de top consumidores.
+   - Botones de exportación instantánea `[📥 Exportar CSV]` y `[📄 Exportar JSON]`.
+2. **API administrativa**:
+   - `GET /api/admin/usage`: consulta de agregados por rangos (`5h`, `semanal`, `mensual`), agrupados por `modelo`, `cuenta` o `agente`, con soporte nativo de exportación a archivo (`format=csv` o `format=json`).
+   - `POST /api/admin/usage/events`: endpoint de ingesta para registrar eventos de consumo atribuidos con tokens o delta porcentual.
+3. **Kit de corrida (`tools/agy-runner/`)**:
+   - Módulos `run-usage-emitter.mjs` y `emit-run-usage.mjs` que permiten envolver cualquier corrida de tareas (`wrap`) o registrar manualmente su inicio y cierre (`start` / `close`), calculando el diferencial exacto de cuota y emitiendo el evento al puente.
+
+> [!NOTE]
+> **Alcance de gobierno:** La telemetría H-9 es una capacidad de observabilidad y control para el dueño y los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA se mantiene inalterado en sus **16 tools `bridge_*`** vigentes, sin sobrecargar la superficie de interoperabilidad de los agentes.
 
 ## Qué hay en este repo
 
@@ -228,6 +265,9 @@ humano al ingresar. La misma guía, sin credencial, en
   se activa con código de un solo uso y jamás pasa por el agente.
 - **Decisiones reservadas**: publicar, mergear, gastar o cambiar permisos
   siempre lo decide un humano.
+- **Telemetría y cuotas honestas**: contabilidad inmutable de cuota y eventos
+  por corrida sin números inventados, con distinción explícita de confiabilidad
+  y exportación directa en CSV y JSON.
 - Este repositorio no contiene código del servidor ni secretos: publicarlo
   no expone la plataforma.
 
