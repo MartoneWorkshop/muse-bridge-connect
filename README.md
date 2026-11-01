@@ -243,6 +243,16 @@ El puente incorpora un subsistema de telemetría de uso para dar visibilidad tot
 > [!NOTE]
 > **Alcance de gobierno:** La telemetría H-9 es una capacidad de observabilidad y control para el dueño y los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA se mantiene inalterado en sus **16 tools `bridge_*`** vigentes, sin sobrecargar la superficie de interoperabilidad de los agentes.
 
+## Conversación con la empresa en tiempo real (Fase 1)
+
+Los chats de alcance (empresa, departamento y canales) ya no son un buzón: el despachador está **activo en producción** y cada mensaje recibe respuesta en tiempo real.
+
+- **Responde el más pertinente:** el motor de enrutado usa señales explícitas (menciones, canal, departamento) para asignar el mensaje al empleado correcto; nadie es respondedor por defecto.
+- **Recepción y respaldo:** la primera línea es el Encargado de Guardia (recepción y enrutado), con cadena de respaldo jefe → subjefe/primario → encargado → agente de confianza ante error, timeout o falta de cuota.
+- **Identidad real:** cada respuesta se genera con la identidad, la skill de cargo, la memoria de la empresa y el historial del empleado que responde.
+- **Canales privados y archivado:** se pueden crear canales privados con miembros elegidos, y cada conversación de alcance puede archivarse para liberar el hilo (archivar, no borrar).
+- **Todo queda registrado:** cada prompt enrutado se archiva como documento con su texto final, su resultado, el modelo usado y la cuota antes/después (ver endpoints `/api/prompts`).
+
 ## Qué hay en este repo
 
 | Ruta | Contenido |
