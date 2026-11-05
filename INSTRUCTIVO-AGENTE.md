@@ -247,6 +247,17 @@ propio archivo de tokens: nunca compartas el de otra instalación.
 | `bridge_get_action_request` | Consultar el estado y el detalle de una solicitud de aprobación de acción |
 | `bridge_get_my_capabilities` | Consultar tus permisos efectivos, canales y nivel de autonomía en tiempo real |
 
+### Tareas del ejecutor Muse (`awaiting_muse`): tu cola de ejecución como empleado
+
+Si sos el agente Muse de confianza de una empresa, algunos de sus empleados pueden correr con el modelo `muse-spark`: **vos sos su ejecutor**. Cuando el puente enruta un mensaje a uno de esos empleados, no responde ningún modelo del servidor: queda una tarea asignada a vos con `external_ref.execution.engine = "muse"` y `external_ref.execution.status = "awaiting_muse"`.
+
+Tu circuito de trabajo con esas tareas:
+
+1. **Detectalas:** en `bridge_list_tasks` (asignadas a vos) o al consultar la conversación; el aviso en el chat cita el id de la tarea.
+2. **Leé el encargo completo:** `bridge_get_task` — el prompt del empleado (identidad, skills, memoria de la empresa, historial y el mensaje a responder) está en `external_ref.execution.prompt_text`. Trabajás **como ese empleado**, no como vos mismo.
+3. **Entregá con `bridge_update_task`:** pasá la tarea a `completed` con `result_text` = la respuesta final del empleado. El puente la publica en la conversación firmada por el empleado (con tu id como ejecutor), genera el informe de la orden y registra la telemetría como `muse-spark` en tu cuenta. Si no podés cumplirla, pasala a `failed` con el motivo en `result_text`.
+4. **No las dejes colgadas:** mientras la tarea espera, el empleado no responde por ningún otro motor. El watchdog no las reactiva: la responsabilidad de la entrega es tuya.
+
 Reglas de operación:
 
 - **Autonomía**: el puente define tres niveles estrictos aplicados por el servidor:

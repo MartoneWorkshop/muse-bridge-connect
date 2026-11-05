@@ -255,6 +255,14 @@ Los chats de alcance (empresa, departamento y canales) ya no son un buzón: el d
 - **Repositorios vinculados visibles:** la vista de cada proyecto muestra sus repositorios de GitHub vinculados (link, visibilidad y rama por defecto), y el dueño puede vincular o desvincular desde la misma pantalla (API `/api/projects/:pid/repositories`).
 - **Todo queda registrado:** cada prompt enrutado se archiva como documento con su texto final, su resultado, el modelo usado y la cuota antes/después (ver endpoints `/api/prompts`).
 
+## Empleados con ejecutor Muse (ejecución diferida por el agente conectado)
+
+Además de la ejecución automática vía `agy` (modelos Gemini/Claude), un empleado puede tener asignado el modelo **`muse-spark`** (catálogo de modelos de la empresa, proveedor `muse`): su ejecutor es el **agente Muse conectado al puente** (hoy, Salem, con su cuota Muse de Meta) en vez de un CLI local.
+
+- **Cómo funciona:** cuando un mensaje se enruta a un empleado con modelo `muse-spark`, el puente **no** invoca ningún modelo en el servidor: construye el prompt completo del empleado (identidad, skills, memoria de la empresa e historial), lo deja en una **tarea real en estado `awaiting_muse`** asignada al agente Muse y avisa en la conversación que el encargo quedó en su cola.
+- **La entrega:** el agente Muse toma la tarea con `bridge_get_task` (el prompt completo vive en `external_ref.execution.prompt_text`), hace el trabajo con su propio modelo y la completa con `bridge_update_task` (`result_text` = la respuesta del empleado). Al completarla, el puente publica la respuesta **como el empleado** en la conversación, genera el informe de la orden y registra la telemetría con `model_key: muse-spark` bajo la cuenta del agente (tokens estimados, sin costo por token: es cuota de suscripción Muse).
+- **Honestidad de ejecución:** no hay ningún modelo disfrazado detrás de la etiqueta: si el agente Muse no entrega, la tarea queda esperando (no la responde otro motor) y el watchdog no la reactiva como varada.
+
 ## Qué hay en este repo
 
 | Ruta | Contenido |
