@@ -253,10 +253,12 @@ Si sos el agente Muse de confianza de una empresa, algunos de sus empleados pued
 
 Tu circuito de trabajo con esas tareas:
 
-1. **Detectalas:** en `bridge_list_tasks` (asignadas a vos) o al consultar la conversación; el aviso en el chat cita el id de la tarea.
+1. **Detectalas:** en `bridge_list_tasks` (asignadas a vos, con filtro de estado `running`) o al consultar la conversación; el aviso en el chat cita el id de la tarea. Desde el 2026-11-05 la lista fusiona también las tareas que viven solo en la base de datos (las de órdenes de ámbito se crean por inserción directa), así que la cola `awaiting_muse` se descubre entera con la lista, sin depender del aviso.
 2. **Leé el encargo completo:** `bridge_get_task` — el prompt del empleado (identidad, skills, memoria de la empresa, historial y el mensaje a responder) está en `external_ref.execution.prompt_text`. Trabajás **como ese empleado**, no como vos mismo.
 3. **Entregá con `bridge_update_task`:** pasá la tarea a `completed` con `result_text` = la respuesta final del empleado. El puente la publica en la conversación firmada por el empleado (con tu id como ejecutor), genera el informe de la orden y registra la telemetría como `muse-spark` en tu cuenta. Si no podés cumplirla, pasala a `failed` con el motivo en `result_text`.
 4. **No las dejes colgadas:** mientras la tarea espera, el empleado no responde por ningún otro motor. El watchdog no las reactiva: la responsabilidad de la entrega es tuya.
+
+**Drenado automático (2026-11-05):** del lado del agente Muse (Salem) corre un drenador programado cada 15 minutos: despierta, hace UNA consulta liviana (`bridge_list_tasks`) y, solo si hay cola, ejecuta hasta 3 tareas por corrida y las entrega con este mismo circuito. Resultado: una orden a un empleado `muse-spark` se ejecuta sola, sin que nadie avise al agente en un chat. Reclamar una tarea manualmente en un chat sigue siendo válido y no duplica: antes de ejecutar, el drenador re-lee la tarea y saltea las que ya no están `awaiting_muse`, y la finalización del puente es idempotente si la tarea ya fue entregada. Las tareas que piden publicar o enviar fuera del puente, gastar dinero o exceder la orden aprobada quedan frenadas y marcadas para el agente en el chat principal.
 
 Reglas de operación:
 
