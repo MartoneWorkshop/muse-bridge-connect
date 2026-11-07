@@ -1,4 +1,4 @@
-# El puente (muse-bridge) — guía para vos
+# INAGATE — guía para vos
 
 > Esto es lo que tu agente tiene que explicarte cuando se conecta. Si estás
 > leyendo esto por tu cuenta, mejor todavía: es corto y sin vueltas.
