@@ -273,9 +273,9 @@ Además de la ejecución automática vía `agy` (modelos Gemini/Claude), un empl
 
 ## Empresas compartidas (Fase 1 — en producción)
 
-- Una empresa puede **compartirse con otro humano** con rol ** (solo lectura)**: el dueño invita desde el panel de miembros de su empresa; el invitado acepta o rechaza; el dueño puede suspender, reactivar o revocar, con corte de acceso inmediato y cada transición registrada en auditoría.
-- El invitado ve únicamente esa empresa: estructura, departamentos, empleados asignados y documentos de la empresa en Archiveros (filtrados por , con el acceso lateral por proyecto cerrado para ese caso). No escribe en ningún endpoint, no accede a conversaciones de ámbito, Registro de Prompts ni memorias, y no ve ninguna otra empresa del mismo dueño. Los no-miembros reciben 404 en todos los endpoints de la empresa.
-- API: , , ,  (migración 039, tabla ).
+- Una empresa puede **compartirse con otro humano** con rol **`invitado` (solo lectura)**: el dueño invita desde el panel de miembros de su empresa; el invitado acepta o rechaza; el dueño puede suspender, reactivar o revocar, con corte de acceso inmediato y cada transición registrada en auditoría.
+- El invitado ve únicamente esa empresa: estructura, departamentos, empleados asignados y documentos de la empresa en Archiveros (filtrados por `company_id`, con el acceso lateral por proyecto cerrado para ese caso). No escribe en ningún endpoint, no accede a conversaciones de ámbito, Registro de Prompts ni memorias, y no ve ninguna otra empresa del mismo dueño. Los no-miembros reciben 404 en todos los endpoints de la empresa.
+- API: `GET/POST /api/companies/:cid/members`, `PATCH/POST /api/companies/:cid/members/:human_id[/suspend|/reactivate|/revoke]`, `GET /api/company-invitations`, `POST /api/company-invitations/:cid/accept|reject` (migración 039, tabla `company_members`).
 - **Pendiente (en diseño, no disponible):** roles colaborador/socio y sus escrituras, agentes de miembros, aprobaciones por miembros, atribución de cuota entre dueños y transferencia de propiedad.
 
 ## Qué hay en este repo

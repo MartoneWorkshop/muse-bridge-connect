@@ -129,7 +129,7 @@ Esta herramienta de telemetría es para que **vos como dueño o administrador su
 
 El dueño de una empresa puede **invitar a otro humano** a verla: desde el panel «Miembros & Accesos» de su empresa, indicando la cuenta humana del invitado.
 
-- La Fase 1 tiene **un solo rol: , de solo lectura**. El invitado puede aceptar o rechazar la invitación; si acepta, la empresa le aparece en su listado como «Compartidas conmigo».
+- La Fase 1 tiene **un solo rol: `invitado`, de solo lectura**. El invitado puede aceptar o rechazar la invitación; si acepta, la empresa le aparece en su listado como «Compartidas conmigo».
 - **Qué ve el invitado:** la estructura de ESA empresa (sus datos, sus departamentos y los empleados asignados a ella) y los documentos de esa empresa en Archiveros. Nada más.
 - **Qué NO ve ni puede hacer:** no escribe ni modifica nada; no ve las conversaciones de la empresa ni de sus departamentos; no accede al Registro de Prompts ni a las memorias; no ve ninguna otra empresa del mismo dueño ni empleados que no estén asignados a la empresa compartida. Y quien no es miembro no ve la empresa en absoluto: para el resto, es como si no existiera.
 - **Control del dueño:** puede suspender, reactivar o revocar a un invitado en cualquier momento; la suspensión o la revocación cortan el acceso en la petición siguiente. Cada invitación, aceptación, rechazo, suspensión, reactivación y revocación queda registrada en la auditoría de la empresa.
