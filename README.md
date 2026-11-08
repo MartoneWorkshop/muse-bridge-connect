@@ -271,6 +271,13 @@ Además de la ejecución automática vía `agy` (modelos Gemini/Claude), un empl
 - **Honestidad de ejecución:** no hay ningún modelo disfrazado detrás de la etiqueta: si el agente Muse no entrega, la tarea queda esperando (no la responde otro motor) y el watchdog no la reactiva como varada.
 - **Drenado automático:** la cola no depende de que alguien avise al agente en un chat. Del lado del agente Muse corre un drenador programado (cada 15 minutos) que la descubre con `bridge_list_tasks` — desde el 2026-11-05 la lista incluye las tareas de ámbito que viven solo en la base de datos —, ejecuta hasta 3 por corrida con el circuito de entrega de arriba y deja registro de cada corrida. Si no hay cola, la corrida termina en silencio tras una única consulta.
 
+## Empresas compartidas (Fase 1 — en producción)
+
+- Una empresa puede **compartirse con otro humano** con rol ** (solo lectura)**: el dueño invita desde el panel de miembros de su empresa; el invitado acepta o rechaza; el dueño puede suspender, reactivar o revocar, con corte de acceso inmediato y cada transición registrada en auditoría.
+- El invitado ve únicamente esa empresa: estructura, departamentos, empleados asignados y documentos de la empresa en Archiveros (filtrados por , con el acceso lateral por proyecto cerrado para ese caso). No escribe en ningún endpoint, no accede a conversaciones de ámbito, Registro de Prompts ni memorias, y no ve ninguna otra empresa del mismo dueño. Los no-miembros reciben 404 en todos los endpoints de la empresa.
+- API: , , ,  (migración 039, tabla ).
+- **Pendiente (en diseño, no disponible):** roles colaborador/socio y sus escrituras, agentes de miembros, aprobaciones por miembros, atribución de cuota entre dueños y transferencia de propiedad.
+
 ## Qué hay en este repo
 
 | Ruta | Contenido |
