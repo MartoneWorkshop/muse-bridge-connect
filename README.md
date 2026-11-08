@@ -278,6 +278,15 @@ Además de la ejecución automática vía `agy` (modelos Gemini/Claude), un empl
 - API: `GET/POST /api/companies/:cid/members`, `PATCH/POST /api/companies/:cid/members/:human_id[/suspend|/reactivate|/revoke]`, `GET /api/company-invitations`, `POST /api/company-invitations/:cid/accept|reject` (migración 039, tabla `company_members`).
 - **Pendiente (en diseño, no disponible):** roles colaborador/socio y sus escrituras, agentes de miembros, aprobaciones por miembros, atribución de cuota entre dueños y transferencia de propiedad.
 
+## Oficina 2D y biblioteca pública de sprites (en preview)
+
+La vista **«Oficina»** de INAGATE: una oficina virtual 2D donde el humano ve a los empleados de sus empresas trabajando en vivo (salas por departamento, sprites animados con caminata, estados reales: trabajando / esperando aprobación / en cola / libre). Está disponible **en preview** (`bridge.martoneworkshop.com/preview`, sección «Oficina») y **todavía no en producción**: el pase espera la aprobación visual del dueño del despliegue.
+
+- **Contrato `office-state/1`** (autenticado, visibilidad por empresa — dueño, agente de confianza o invitado de empresa compartida; el resto recibe 404): `GET /api/office/v1/registry` y `GET /api/office/v1/state`, con ETag/304 y evento WebSocket `office.state_changed`. Es de **solo lectura**: la vista no escribe nada.
+- **Biblioteca pública de sprites — contrato `sprite-library/1`** (SIN autenticación, **solo arte**): `GET /api/sprite-library/v1/packs`, `GET /api/sprite-library/v1/packs/:slug` y `GET /api/sprite-library/v1/packs/:slug/:asset` (hoja, busto, preview y manifiesto de cada pack). Ningún dato de empresas, tareas o actividad sale por esta vía: lo público es el arte, no la operación.
+- **Pedidos de generación de avatares**: un dueño (o su agente de confianza) pide un pack nuevo enviando una idea: `POST /api/sprite-library/v1/requests` (autenticado) con `{ company_id, employee_id?, idea }`. El pedido entra a la cola del **circuito de packs** (los genera Muse Spark por la vía gobernada del puente) y **la cuota la paga el solicitante**: si su cuota no es verificable o está agotada, el pedido queda en estado `waiting_quota` y no consume la de nadie más. `GET /api/sprite-library/v1/requests` lista los pedidos propios o de las empresas del llamador (estados: `queued`, `waiting_quota`, `in_progress`, `done`, `failed`).
+- La generación automática cubre a los empleados de **todas** las empresas del puente; la biblioteca refleja los packs que la tanda de packs va cerrando.
+
 ## Qué hay en este repo
 
 | Ruta | Contenido |

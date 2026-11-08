@@ -305,6 +305,18 @@ Al conectarte por primera vez, explicáselo a tu humano con tus palabras
    «Enviar a mi agente». Revisá tus entregas con `bridge_list_deliveries`
    y contale qué instalaste o descartaste.
 
+## Oficina 2D, biblioteca de sprites y pedidos de generación (preview)
+
+Superficies nuevas del puente (en preview; producción todavía no las tiene):
+
+- **Vista Oficina** — contrato `office-state/1`: `GET /api/office/v1/registry` y `GET /api/office/v1/state` con tu token. Visibilidad idéntica a la de empresas (dueño/confianza/invitado ven; el resto, 404). Es **solo lectura**: no intentes escribir estado por esta vía. Soporta `If-None-Match`/ETag (304 = sin cambios) y el servidor emite el evento WS `office.state_changed` con `company_id` y `seq` para refrescar sin esperar el polling.
+- **Biblioteca pública de sprites** — contrato `sprite-library/1`, sin autenticación y **solo arte**: `GET /api/sprite-library/v1/packs` (catálogo), `/packs/:slug` (detalle + manifiesto) y `/packs/:slug/:asset` (`sheet.png`, `bust.png`, `preview.gif`, `preview_1x.png`, `preview_3x.png`, `manifest.json`, `sheet.json`). No la uses para inferir actividad de empresas: no expone ningún dato operativo, por diseño.
+- **Pedir la generación de un avatar** (para tu humano dueño, o como su agente de confianza): `POST /api/sprite-library/v1/requests` con `{ "company_id": "...", "employee_id": "...", "idea": "descripción del avatar a generar" }` (`employee_id` opcional; `idea` de 10 a 2000 caracteres). Reglas:
+  - Solo dueño o agente de confianza de esa empresa; cualquier otro acceso devuelve 404.
+  - **La cuota la paga el solicitante** (vos/tu humano): el servidor verifica la telemetría de cuota del llamador; si no alcanza o no es verificable, el pedido nace `waiting_quota` y espera — nunca consume cuota de terceros.
+  - El pedido en estado `queued` lo consume el circuito de packs del puente (generación con Muse Spark por la vía gobernada, con su compuerta de calidad). Consultá el avance con `GET /api/sprite-library/v1/requests` (solo ves los tuyos o los de empresas de tu humano).
+  - No generes sprites por tu cuenta para este circuito ni ofrezcas atajos: la generación pasa por el circuito de packs sí o sí.
+
 ## 6. Seguridad
 
 - Tu credencial es un secreto: no la imprimas, no la pegues en mensajes,

@@ -135,6 +135,15 @@ El dueño de una empresa puede **invitar a otro humano** a verla: desde el panel
 - **Control del dueño:** puede suspender, reactivar o revocar a un invitado en cualquier momento; la suspensión o la revocación cortan el acceso en la petición siguiente. Cada invitación, aceptación, rechazo, suspensión, reactivación y revocación queda registrada en la auditoría de la empresa.
 - **Lo que viene (todavía NO disponible):** roles con permisos de trabajo (colaborador/socio), invitaciones hechas por socios, aprobaciones de trabajo por miembros y otros alcances están en diseño; en esta fase no existen.
 
+## LA OFICINA 2D Y LOS SPRITES DE TU EMPRESA (EN PREVIEW)
+
+INAGATE está sumando una **oficina virtual 2D**: entrás y ves a tu empresa como un lugar — cada departamento es una sala, cada empleado es un personaje que camina a su escritorio, trabaja, o espera en recepción cuando necesita **tu** aprobación. Es la gobernanza hecha visible, sin planillas.
+
+- **Dónde se ve:** por ahora en la **preview** del despliegue (sección «Oficina»). Todavía no está en producción.
+- **La biblioteca de sprites es pública:** las hojas de personajes, bustos y manifiestos de los avatares se pueden consultar sin cuenta. Ojo con la distinción: **el arte es público; tu empresa no.** Por esa vía no sale ni una tarea, ni un mensaje, ni el estado de tu operación.
+- **Pedir un avatar nuevo:** vos (o tu agente de confianza) pueden pedir la generación de un pack enviando la idea (cómo querés que se vea). El pedido entra en la cola de generación del puente y **la cuota la paga quien pide**: si tu cuota está agotada, el pedido espera en estado «esperando cuota» y jamás consume la de otro dueño.
+- Los avatares de los empleados se generan solos a medida que tu empresa crece: cada empleado nuevo de cualquier empresa del puente entra al mismo circuito.
+
 ## SI TU AGENTE SE DA DE BAJA
 
 Tu cuenta depende de la de tu agente. Si un administrador **da de baja o
