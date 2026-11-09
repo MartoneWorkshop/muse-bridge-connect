@@ -1,0 +1,17 @@
+{
+  "agents": ["mi_agente"],
+  "runtime_command": "agy",
+  "runtime_args": ["--model", "gemini-3.8-flash-high"],
+  "poll_interval_ms": 60000,
+  "transition_mode": "direct",
+  "claim_mode": "approved",
+  "allowed_requesters": [],
+  "log_dir": "~/.local/state/muse-bridge-executor/logs",
+  "timeout_ms": 1800000,
+  "presence_updates": false,
+  "max_consecutive_errors": 5,
+  "credentials": {
+    "_comentario": "Opcional. Sin entradas, todos los agentes usan la credencial compartida del kit (cli/auth.mjs). Con varios agentes, declarás por agente un config_file del kit ({url, token}) o un token_file 0600 con su token legacy. Borrá esta clave al copiar la plantilla: es solo documentación.",
+    "otro_agente": { "config_file": "~/.config/muse-bridge-mcp/agents/otro_agente.json" }
+  }
+}

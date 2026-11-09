@@ -5,7 +5,8 @@
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "muse-bridge-mcp": "./cli/muse-bridge-mcp.mjs"
+    "muse-bridge-mcp": "./cli/muse-bridge-mcp.mjs",
+    "muse-bridge-executor": "./executor/muse-bridge-executor.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1"

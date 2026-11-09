@@ -271,6 +271,16 @@ Además de la ejecución automática vía `agy` (modelos Gemini/Claude), un empl
 - **Honestidad de ejecución:** no hay ningún modelo disfrazado detrás de la etiqueta: si el agente Muse no entrega, la tarea queda esperando (no la responde otro motor) y el watchdog no la reactiva como varada.
 - **Drenado automático:** la cola no depende de que alguien avise al agente en un chat. Del lado del agente Muse corre un drenador programado (cada 15 minutos) que la descubre con `bridge_list_tasks` — desde el 2026-11-05 la lista incluye las tareas de ámbito que viven solo en la base de datos —, ejecuta hasta 3 por corrida con el circuito de entrega de arriba y deja registro de cada corrida. Si no hay cola, la corrida termina en silencio tras una única consulta.
 
+## Ejecutor local: tus agentes trabajan en tu computadora (nuevo)
+
+Componente opcional del kit: **`muse-bridge-executor`** (carpeta `executor/`). Hasta ahora, las tareas que el puente asigna a un agente solo las ejecutaban los pollers que corren en el servidor. Con el ejecutor local, las tareas de **tus** agentes las reclama y las ejecuta **tu propia máquina**, con tu runtime y tu cuota: el puente gobierna y registra; el trabajo ocurre en tu equipo.
+
+- **Cómo trabaja:** hace polling gobernado contra el puente (respeta el interruptor de gobernanza del poller, F-10), lista solo las tareas asignadas a los agentes que le configurás, valida solicitante y asignación, y reclama por la vía gobernada (MCP `bridge_claim_task`). Ejecuta tu runtime local (p. ej. tu `agy` u otro comando) con el prompt de la tarea y reporta el resultado por las mismas vías que los pollers del servidor: transición de la tarea con verificación por read-back (o mensaje formal `task_result`), informe de ejecución y archivo del prompt.
+- **Doctrina `consultar`:** si un agente está en `consultar`, el ejecutor **no ejecuta**: el reclamo genera el pedido de aprobación en el puente y el ejecutor espera el ticket aprobado para reclamar de nuevo con ese ticket. No hay opción para saltear la aprobación.
+- **Presencia:** su actividad regular mantiene a tus agentes «en línea». Si el ejecutor no está corriendo, tus agentes figuran sin conexión — que es la señal para que el enrutado no les asigne trabajo nuevo.
+- **Configuración:** `~/.config/muse-bridge-mcp/executor.json` (plantilla comentada en `executor/executor.example.json`), con las credenciales que ya usa el kit — ningún secreto vive en este repo. Trae `--dry-run` para ver qué haría sin reclamar ni ejecutar nada, y puede correr suelto, con `--once` bajo un timer, o como servicio `systemd --user`.
+- **Detalle completo:** `executor/README.md`. Estado: v1 disponible en este repo; instalarlo y mantenerlo corriendo es responsabilidad del dueño de la máquina, igual que su consumo de cuota.
+
 ## Empresas compartidas (Fase 1 — en producción)
 
 - Una empresa puede **compartirse con otro humano** con rol **`invitado` (solo lectura)**: el dueño invita desde el panel de miembros de su empresa; el invitado acepta o rechaza; el dueño puede suspender, reactivar o revocar, con corte de acceso inmediato y cada transición registrada en auditoría.
@@ -292,6 +302,7 @@ La vista **«Oficina»** de INAGATE: una oficina virtual 2D donde el humano ve a
 | Ruta | Contenido |
 | --- | --- |
 | [`cli/`](cli/) | Cliente CLI `muse-bridge-mcp` (Node ≥ 18), ejecutable vía `npx` |
+| [`executor/`](executor/) | Ejecutor local del usuario: reclama y ejecuta en su máquina las tareas de sus agentes (ver `executor/README.md`) |
 | [`install.sh`](install.sh) | Instalador de un comando (CLI global + asistente de configuración) |
 | [`examples/`](examples/) | Configuraciones MCP por cliente (Antigravity, Claude Code, VS Code/Copilot, Copilot CLI) |
 | [`INSTRUCTIVO-AGENTE.md`](INSTRUCTIVO-AGENTE.md) | Guía completa para el agente |
