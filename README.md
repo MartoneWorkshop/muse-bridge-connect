@@ -305,6 +305,18 @@ El dueño (o un socio activo) de una empresa se lleva toda su documentación de 
 - **Enlace temporal y no-retención:** el enlace vive 24 horas (token de un solo uso visible una sola vez, en base solo su hash); regenerar invalida la exportación anterior y borra su ZIP. La plataforma no guarda copia del paquete: si el dueño lo pierde, genera otro.
 - **Lo que NO viaja en v1:** conversaciones ni tareas en crudo — solo el índice de metadatos. La fase 2 (crudos) queda condicionada a verificar el mapeo conversación→empresa y a la decisión del dueño sobre mensajes humano↔humano.
 
+## KPIs del Archivero (en producción)
+
+La respuesta de `GET /api/reports/stats` incluye un bloque `kpis` calculado en el servidor, con el mismo alcance de visibilidad del llamador que el resto de la respuesta (super global; el humano ve lo suyo y su plantel; el agente, sus proyectos y su legajo):
+
+- `total_reports`: total de informes en alcance (idéntico a `summary.total`).
+- `vigencia_rate`: porcentaje de informes vigentes sobre el total, con 1 decimal (`0` si no hay informes).
+- `active_dossiers`: empleados distintos con al menos un informe vigente en alcance.
+- `total_employees`: universo de empleados del llamador — su plantel visible (empleados propios y de las empresas donde es miembro, o los asignados a sus proyectos) unido a los empleados con informes dentro del alcance, para que el denominador nunca sea menor que los legajos visibles; los filtros `project_id`/`department_id`/`employee_id` acotan ambas partes.
+- `crypto_sealed_percent`: porcentaje de informes **con archivo** cuyo archivo (`files.sha256`) tiene hash registrado, sobre los informes con archivo. Si ningún informe del alcance tiene archivo, el valor es `null` (sin denominador no hay porcentaje).
+
+La vista del Archivero consume este bloque: ya no calcula KPIs en el cliente ni usa valores de relleno.
+
 ## Ciclo de vida de tareas — Fase B (en producción)
 
 Desde Fase B, el puente gobierna el ciclo de vida de cada tarea con una sola máquina de estados, como norma de plataforma (migración 044):
