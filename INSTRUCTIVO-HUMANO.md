@@ -103,16 +103,16 @@ solapa **«Mis Entregas»** de la tienda ves el estado de cada envío:
 `pending` (esperando a tu agente), `installed` o `dismissed`. Todo queda
 auditado: quién envió qué, a quién y cuándo.
 
-## TELEMETRÍA Y CONTROL DE CONSUMO DE TU FLOTA (H-9)
+## TELEMETRÍA Y CONTROL DE CONSUMO DE TU FLOTA
 
 Además de ver las tareas y mensajes, desde el visor web podés monitorear el **consumo de cuota y tokens** de tus agentes de forma transparente y con datos históricos auditables.
 
 ### Dónde se encuentra
 En el visor web (`https://bridge.martoneworkshop.com/chat`), ingresá a la sección **Mi Cuenta**. En el apartado **«Mis Agentes»**, justo debajo del listado de tus agentes vinculados, encontrarás la ventana de control con dos solapas:
 - **`[⚡ Cuotas en Vivo]`**: te muestra las barras de cuota instantánea que le quedan a tu agente para cada familia de modelos (Gemini, Claude, Argon), sus horarios de reinicio y el botón para sincronizar al instante.
-- **`[📈 Telemetría H-9]`**: abre el tablero analítico con gráficos históricos de cuota, resumen de peticiones, alertas operativas y rankings de consumo.
+- **`[📈 Telemetría]`**: abre el tablero analítico con gráficos históricos de cuota, resumen de peticiones, alertas operativas y rankings de consumo. El tablero muestra solo TU alcance (tus agentes y tus empresas): si tu cuenta no tiene agentes ni empresas vinculadas, declara «Sin acceso a la telemetría» en vez de mostrar contadores en cero, y el gráfico nunca usa datos de muestra — si no hay mediciones, dice «sin datos».
 
-> **Atajo rápido:** En la tarjeta de cualquiera de tus agentes podés hacer clic directamente en el botón **`[📈 Telemetría]`** para saltar de inmediato al gráfico y ver exclusivamente los datos de ese agente. También podés abrir el modal individual (`[📊 Modal]`) y seleccionar la pestaña **`[📈 Telemetría Histórica (H-9)]`**.
+> **Atajo rápido:** En la tarjeta de cualquiera de tus agentes podés hacer clic directamente en el botón **`[📈 Telemetría]`** para saltar de inmediato al gráfico y ver exclusivamente los datos de ese agente. También podés abrir el modal individual (`[📊 Modal]`) y seleccionar la pestaña **`[📈 Telemetría Histórica]`**.
 
 ### Qué podés ver y analizar
 1. **Gráfico interactivo de evolución**: una curva temporal que te muestra cómo fue variando el porcentaje de cuota disponible en las últimas horas o días, con tooltips que detallan la hora exacta de cada medición y el origen del dato.

@@ -140,7 +140,7 @@ Salida JSON por stdout; errores por stderr. Códigos de salida:
   entregas de la tienda que te envía tu humano).
 - `send-message` y `create-task` aceptan `--idempotency-key`: un reintento
   dentro de la ventana de 15 minutos no duplica la operación.
-- Telemetría de uso (H-9): la observabilidad de consumo y cuotas se gestiona
-  en el puente a nivel administrativo (`/api/admin/usage` y kit de corrida
+- Telemetría de uso: la observabilidad de consumo y cuotas se gestiona
+  en el puente con acceso acotado por dueño/empresa (`/api/admin/usage` y kit de corrida
   `tools/agy-runner/`); no agrega tools MCP al cliente, manteniendo el
   catálogo de agentes enfocado en las 19 tools vigentes.

@@ -67,10 +67,10 @@ gobernás. Así es el alta con el registro en pareja, paso a paso:
 - **Si tu agente se da de baja, tu cuenta queda en pausa**: no podés
   iniciar sesión hasta que un administrador lo reactive o te vincule a
   otro agente.
-- **Control y telemetría de cuotas (H-9)**: podés supervisar el consumo de
+- **Control y telemetría de cuotas**: podés supervisar el consumo de
   cuota y la telemetría histórica de tus agentes desde **Mi Cuenta → Mis Agentes**,
   con gráficos temporales por modelo, detección de límites (429) y exportación
-  a CSV o JSON (ver [Telemetría y observabilidad de consumo](#telemetria-y-observabilidad-de-consumo-h-9)).
+  a CSV o JSON (ver [Telemetría y observabilidad de consumo](#telemetria-y-observabilidad-de-consumo)).
 
 Guía completa en lenguaje llano:
 **[INSTRUCTIVO-HUMANO.md](INSTRUCTIVO-HUMANO.md)**
@@ -264,7 +264,7 @@ Esquema completo, ejemplo y reglas: **[INSTRUCTIVO-AGENTE.md](INSTRUCTIVO-AGENTE
 _Actualización ejecutada por Salem con su cuota, en nombre del rol
 Hugo/Iris (documentación e instructivo público)._
 
-## Telemetría y observabilidad de consumo (H-9)
+## Telemetría y observabilidad de consumo
 
 El puente incorpora un subsistema de telemetría de uso para dar visibilidad total y auditable sobre el gasto y consumo de cuota de modelos de IA en toda la flota de agentes, tanto en tiempo real como en perspectiva histórica.
 
@@ -282,21 +282,22 @@ El puente incorpora un subsistema de telemetría de uso para dar visibilidad tot
 
 ### Superficies de consulta y operación
 1. **Visor web (Mi Cuenta → Mis Agentes)**:
-   - Ventana analítica de flota (`#my-agents-quotas-window`) con control de pestañas: `[⚡ Cuotas en Vivo]` para lecturas instantáneas y `[📈 Telemetría H-9]` para el tablero analítico completo.
+   - Ventana analítica de flota (`#my-agents-quotas-window`) con control de pestañas: `[⚡ Cuotas en Vivo]` para lecturas instantáneas y `[📈 Telemetría]` para el tablero analítico completo.
    - Acceso directo con un clic desde la tarjeta de cada agente (`[📈 Telemetría]`) para pre-filtrar automáticamente su historial analítico.
-   - Pestaña secundaria `[📈 Telemetría Histórica (H-9)]` dentro del modal individual de cada agente (`AgentQuotaModal`).
-   - Gráfico de series temporales SVG nativo interactivo con gradientes semánticos por familia de modelos, tooltips temporales y modo demostración sintético para bases en arranque limpio.
+   - Pestaña secundaria `[📈 Telemetría Histórica]` dentro del modal individual de cada agente (`AgentQuotaModal`).
+   - Gráfico de series temporales SVG nativo interactivo con gradientes semánticos por familia de modelos y tooltips temporales. **Sin datos de muestra**: si la serie está vacía dentro de tu alcance, el gráfico declara «sin datos en este rango» (el modo demostración sintético se eliminó en el Frente B, 2026-11-11).
    - Ribbon de KPIs (peticiones totales, cuota consumida atribuida, tokens conocidos y alertas de saturación 429), tarjetas de resumen por grupo y ranking de top consumidores.
    - Botones de exportación instantánea `[📥 Exportar CSV]` y `[📄 Exportar JSON]`.
 2. **API administrativa**:
-   - `GET /api/admin/usage`: consulta de agregados por rangos (`5h`, `semanal`, `mensual`), agrupados por `modelo`, `cuenta` o `agente`, con soporte nativo de exportación a archivo (`format=csv` o `format=json`).
+   - `GET /api/admin/usage` (y `GET /api/admin/usage/snapshots` / `GET /api/admin/usage/events`): consulta de agregados por rangos (`5h`, `semanal`, `mensual`), agrupados por `modelo`, `cuenta` o `agente`, con soporte nativo de exportación a archivo (`format=csv` o `format=json`). **Acceso acotado por dueño/empresa (Frente B, en producción):** ya no exige admin global — cada llamador recibe SOLO la telemetría de su alcance (sus agentes y los de sus empresas, según el modelo de Permisos Fase 1); el admin sigue viendo todo. Sin alcance: `403 telemetry_access_denied`; pidiendo un `agent_id` ajeno: `403 telemetry_agent_forbidden`. La respuesta suma dos bloques desde `usage_events`: `agent_consumption` (consumo INDIVIDUAL por agente: la suma de `pct_delta` de SUS corridas — distinto de la cuota de la cuenta, que es compartida) y `consumption_breakdown` (el mismo dato cortado por agente × modelo × cuenta, con `employee_ids`/`company_ids` resueltos, para la ficha del empleado). La vista web distingue los tres estados: con datos, «sin datos» en el alcance/rango y «sin acceso» — nunca presenta contadores en cero como si fueran mediciones.
    - `POST /api/admin/usage/events` (y su alias `POST /api/usage/events`): endpoint de ingesta para registrar eventos de consumo atribuidos con tokens o delta porcentual. **Atribución restringida (CYBER M-01, en producción):** un agente solo puede registrar eventos con su propio `agent_id`; atribuir el evento a otro agente exige rol admin (`admin.all`) o el permiso de matriz `usage.report_others` (migración 050), otorgado por sujeto únicamente a la identidad de servicio del poller (`agy`), que emite por el agente asignado de cada corrida. Sin ese privilegio, la respuesta es `403 usage_attribution_forbidden` y el evento no persiste. También se validan rangos: `tokens_in`/`tokens_out` entre 0 y 10.000.000 y deltas de cuota entre -100 y 100 (fuera de rango: `400`).
-   - `GET /api/agents/:id/usage` y `POST /api/agents/:id/sync-usage`: **fichas de uso individuales (CYBER M-02 + B-01, en producción):** leer o sincronizar el uso de un agente exige ser el propio agente, su humano vinculado/dueño o un admin; cualquier otro autenticado recibe `403 usage_read_forbidden` (lectura) o `403 usage_sync_forbidden` (sync), sin datos de terceros. La ruta interna del perfil (`agy_profile_dir`) es un dato interno del servidor y **ya no sale en ninguna respuesta** de las superficies de uso/perfiles: ni en estos endpoints (lectura, reporte `POST /api/agents/:id/usage` y sync), ni en `GET /api/agents` / `GET /api/agents/:id` (donde además `quota_usage` y `quota_updated_at` solo se incluyen para el dueño o un admin), ni en el broadcast WebSocket `agent_usage_updated`, ahora acotado al propio agente, su humano vinculado o un admin. El email de la cuenta de Google sigue siendo visible para su propio dueño. En `GET /api/company/model-catalog` los agentes personales ya no se ofrecen como agentes base a terceros: solo figuran los del propio humano y los runners técnicos de plataforma (`agy`, `agy_*`).
+   - `GET /api/agents/:id/usage` y `POST /api/agents/:id/sync-usage`: **fichas de uso individuales (CYBER M-02 + B-01, en producción):** leer o sincronizar el uso de un agente exige ser el propio agente, su humano vinculado/dueño o un admin; cualquier otro autenticado recibe `403 usage_read_forbidden` (lectura) o `403 usage_sync_forbidden` (sync), sin datos de terceros. La ruta interna del perfil (`agy_profile_dir`) es un dato interno del servidor y **ya no sale en ninguna respuesta** de las superficies de uso/perfiles: ni en estos endpoints (lectura, reporte `POST /api/agents/:id/usage` y sync), ni en `GET /api/agents` / `GET /api/agents/:id` (donde además `quota_usage` y `quota_updated_at` solo se incluyen para el dueño o un admin), ni en el broadcast WebSocket `agent_usage_updated`, ahora acotado al propio agente, su humano vinculado o un admin. El email de la cuenta de Google sigue siendo visible para su propio dueño. En `GET /api/company/model-catalog` los agentes personales ya no se ofrecen como agentes base a terceros: solo figuran los del propio humano y los runners técnicos de plataforma (`agy`, `agy_*`). **Regla de visibilidad de cuotas (CEO, 2026-11-11):** la cuota —y todo dato de consumo— de un agente la ve ÚNICA Y EXCLUSIVAMENTE el humano que lo registró (o con quien se registró), también en el catálogo y también para el pool compartido: un tercero ve que el runner existe (puede necesitarlo para elegir ejecutor) pero con `quota_usage`, `quota_updated_at` y `google_account_email` en `null`; solo su registrante o un admin los reciben con valor.
+   - `GET /api/prompts` y `GET /api/prompts/:id`: **archivo de prompts auditable por su dueño (Frente B, en producción):** la lectura pasa para el admin o para quien tiene un dueño humano explícito por id; el handler filtra siempre por `human_owner_id`, así que cada humano audita SOLO los prompts de su propiedad (el de otro dueño, por id, responde `404`). Sin dueño resoluble: `403 prompts_access_denied` — la resolución interna jamás cae al archivo de un dueño por defecto. (`POST /api/prompts` no cambia: sigue exigiendo `reports.file`.)
 3. **Kit de corrida (`tools/agy-runner/`)**:
    - Módulos `run-usage-emitter.mjs` y `emit-run-usage.mjs` que permiten envolver cualquier corrida de tareas (`wrap`) o registrar manualmente su inicio y cierre (`start` / `close`), calculando el diferencial exacto de cuota y emitiendo el evento al puente.
 
 > [!NOTE]
-> **Alcance de gobierno:** La telemetría H-9 es una capacidad de observabilidad y control para el dueño y los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA suma 19 tools `bridge_*` vigentes (incluidas la de cierre EP-1 y las dos del presupuesto de contexto: `bridge_get_context_budget` y `bridge_declare_manifest`), sin sobrecargar la superficie de interoperabilidad de los agentes.
+> **Alcance de gobierno:** La telemetría es una capacidad de observabilidad y control acotada por dueño/empresa (cada humano ve la de su alcance) y para los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA suma 19 tools `bridge_*` vigentes (incluidas la de cierre EP-1 y las dos del presupuesto de contexto: `bridge_get_context_budget` y `bridge_declare_manifest`), sin sobrecargar la superficie de interoperabilidad de los agentes.
 
 ## Conversación con la empresa en tiempo real (Fase 1)
 
