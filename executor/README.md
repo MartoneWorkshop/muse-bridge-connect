@@ -47,7 +47,7 @@ tope de ciclos con error (`max_consecutive_errors`) tras el cual se pausa.
 
 1. Primero configurá el kit como siempre (`inagate-bridge-mcp setup`): eso crea
    `~/.config/inagate-bridge-mcp/config.json` con la URL del puente y tu
-   credencial (token legacy o sesión login). El ejecutor reutiliza ese módulo
+   credencial (sesión login con usuario y contraseña; desde Cyber M-05, 2026-11-11, el puente ya no acepta tokens legacy). El ejecutor reutiliza ese módulo
    de autenticación; no guarda secretos propios.
 2. Copiá la plantilla y completala:
 
@@ -69,7 +69,7 @@ tope de ciclos con error (`max_consecutive_errors`) tras el cual se pausa.
    | `log_dir` | Logs por ciclo (`executor.log`) y por tarea (`<task_id>.log`) + estado local. |
    | `timeout_ms` | Timeout por ejecución del runtime. |
    | `presence_updates` | `true` para presencia rica al arrancar/parar. |
-   | `credentials` | Opcional, por agente: `{ "config_file": "~/.config/inagate-bridge-mcp/agents/<agente>.json" }` (un `config.json` del kit con su `token`) o `{ "token_file": "~/.config/inagate-bridge/agente.token" }` (archivo 0600 con el token legacy). Sin entradas, se usa la credencial compartida del kit. |
+   | `credentials` | Opcional, por agente: `{ "config_file": "~/.config/inagate-bridge-mcp/agents/<agente>.json" }` (un `config.json` del kit con su sesión login). La opción `token_file` (token legacy) quedó sin efecto: el puente la rechaza desde Cyber M-05 (2026-11-11). Sin entradas, se usa la credencial compartida del kit. |
 
    La URL del puente y la credencial salen de la config/auth del kit
    (`BRIDGE_URL`, `BRIDGE_TOKEN`, `BRIDGE_CONFIG_FILE`, etc. tienen prioridad
