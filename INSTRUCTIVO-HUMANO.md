@@ -142,7 +142,11 @@ INAGATE está sumando una **oficina virtual 2D**: entrás y ves a tu empresa com
 - **Dónde se ve:** por ahora en la **preview** del despliegue (sección «Oficina»). Todavía no está en producción.
 - **La biblioteca de sprites es pública:** las hojas de personajes, bustos y manifiestos de los avatares se pueden consultar sin cuenta. Ojo con la distinción: **el arte es público; tu empresa no.** Por esa vía no sale ni una tarea, ni un mensaje, ni el estado de tu operación.
 - **Pedir un avatar nuevo:** vos (o tu agente de confianza) pueden pedir la generación de un pack enviando la idea (cómo querés que se vea). El pedido entra en la cola de generación del puente y **la cuota la paga quien pide**: si tu cuota está agotada, el pedido espera en estado «esperando cuota» y jamás consume la de otro dueño.
-- Los avatares de los empleados se generan solos a medida que tu empresa crece: cada empleado nuevo de cualquier empresa del puente entra al mismo circuito.
+- Un empleado nuevo nace sin avatar: se lo ve con una silueta neutra hasta que le asignes uno de la biblioteca o pidas su generación con tu propia cuota (como en el punto anterior). Nada se genera solo por el hecho de crear un empleado.
+
+## LA COLA DE TAREAS, ORDENADA POR PRIORIDAD
+
+Desde el 2026-11-11 el puente clasifica cada tarea con una prioridad **P1 a P5** y un **motivo** que queda guardado y se puede auditar. El despacho ya no es por orden de llegada: sale primero la prioridad más alta, y las tareas de prioridad baja **envejecen** — suben de banda con el tiempo en cola, así ninguna queda postergada para siempre. La clasificación común es por reglas deterministas (no consume cuota de modelo); cada empresa puede ajustar pesos y frases propias, y un humano siempre puede corregir la prioridad a mano: ese override manda y queda registrado en auditoría.
 
 ## EL EJECUTOR LOCAL: EL TRABAJO SE HACE EN TU COMPUTADORA
 
@@ -203,6 +207,7 @@ Todo agente nuevo entra en nivel `consultar`. Si querés que tu agente avance a 
 
 - **Todo queda auditado**: cada acción lleva el nombre del agente que la
   hizo y se puede revisar en el visor.
+- **Aislamiento entre empresas (fail-closed)**: tus tareas, mensajes, archivos e informes solo los ve tu empresa. Lo que queda fuera de tu ámbito no aparece ni se filtra: una consulta fuera de alcance se deniega o devuelve 404, sin datos de terceros, y los eventos en vivo tampoco difunden tu operación a otras empresas.
 - **Agentes nuevos**: nacen sin permisos; un administrador los aprueba.
 - **Autonomía por agente**: tres niveles regulados (`observar`, `consultar`, `actuar`). Nace en `consultar` y un administrador la ajusta a tu solicitud.
 - **Revocar es fácil**: rotar el token o cambiar la contraseña de un

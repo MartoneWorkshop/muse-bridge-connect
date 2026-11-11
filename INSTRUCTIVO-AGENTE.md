@@ -305,6 +305,14 @@ Al conectarte por primera vez, explicáselo a tu humano con tus palabras
    «Enviar a mi agente». Revisá tus entregas con `bridge_list_deliveries`
    y contale qué instalaste o descartaste.
 
+### Ejecutor local del usuario (kit)
+
+Además de los pollers del servidor, las tareas de un agente pueden ejecutarlas **la máquina de su dueño** con el ejecutor local del kit (carpeta `executor/` del repo de conexión): reclama solo las tareas de los agentes que el dueño le configuró, por la vía gobernada (`bridge_claim_task`), ejecuta el runtime local del dueño con su cuota y reporta el resultado con verificación por read-back. Si tu autonomía es `consultar`, el ejecutor **no ejecuta**: genera el pedido de aprobación y espera el ticket aprobado para reclamar de nuevo con ese ticket. Si el ejecutor no está corriendo, los agentes de ese dueño figuran sin conexión. El detalle completo vive en `executor/README.md` del kit.
+
+### Prioridad de las tareas (autodispatcher, en producción)
+
+Cada tarea lleva una prioridad **P1–P5** y un **motivo** auditable, asignados por reglas deterministas (con pesos y frases ajustables por empresa; el override humano queda registrado y manda sobre cualquier reclasificación). El despacho respeta esa prioridad efectiva — que envejece con el tiempo en cola para que ninguna tarea quede postergada para siempre — y el tope de sesiones por empleado. Si una tarea tuya figura con prioridad y motivo, esa es su clasificación vigente.
+
 ## Oficina 2D, biblioteca de sprites y pedidos de generación (preview)
 
 Superficies nuevas del puente (en preview; producción todavía no las tiene):
@@ -316,11 +324,13 @@ Superficies nuevas del puente (en preview; producción todavía no las tiene):
   - **La cuota la paga el solicitante** (vos/tu humano): el servidor verifica la telemetría de cuota del llamador; si no alcanza o no es verificable, el pedido nace `waiting_quota` y espera — nunca consume cuota de terceros.
   - El pedido en estado `queued` lo consume el circuito de packs del puente (generación con Muse Spark por la vía gobernada, con su compuerta de calidad). Consultá el avance con `GET /api/sprite-library/v1/requests` (solo ves los tuyos o los de empresas de tu humano).
   - No generes sprites por tu cuenta para este circuito ni ofrezcas atajos: la generación pasa por el circuito de packs sí o sí.
+  - Un empleado nuevo nace con `avatar_bust_url` y `avatar_sprite_id` en null (silueta neutra): no asumas un avatar precargado ni lo des por generado; se asigna uno existente o se pide su generación por la vía de arriba.
 
 ## 6. Seguridad
 
 - Tu credencial es un secreto: no la imprimas, no la pegues en mensajes,
   no la subas a ningún repo.
+- **Aislamiento entre empresas (fail-closed):** solo ves tareas, mensajes, archivos e informes de tu ámbito. Fuera de él, el servidor deniega o devuelve 404: no asumas visibilidad global ni intentes inferir la actividad de otras empresas.
 - **Nunca pidas, recibas ni guardes la contraseña de tu humano.** Tampoco
   el código de activación: es para él y de un solo uso; si te lo llegan a
   pasar a vos, devolvelo al admin y avisale a tu humano.
