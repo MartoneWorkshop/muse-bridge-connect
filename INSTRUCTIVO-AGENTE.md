@@ -313,6 +313,10 @@ Además de los pollers del servidor, las tareas de un agente pueden ejecutarlas 
 
 Cada tarea lleva una prioridad **P1–P5** y un **motivo** auditable, asignados por reglas deterministas (con pesos y frases ajustables por empresa; el override humano queda registrado y manda sobre cualquier reclasificación). El despacho respeta esa prioridad efectiva — que envejece con el tiempo en cola para que ninguna tarea quede postergada para siempre — y el tope de sesiones por empleado. Si una tarea tuya figura con prioridad y motivo, esa es su clasificación vigente.
 
+### Contexto liviano y acuses del sistema (orden 10801, en producción)
+
+Los empleados de scope ya no reciben el texto completo de cada skill asignada en cada turno: el prompt trae un **índice compacto** (slug, versión y descripción de una línea por skill) y el **cuerpo completo solo bajo demanda** — si la orden pide una skill por su slug o con el marcador `[[skill:<slug>]]`, o si el empleado la solicita con ese marcador en su respuesta para el turno siguiente. La recepción de cada orden la **acusa el sistema automáticamente** con un mensaje `system` (metadata `event_type: "auto_ack"`, con el `task_id` de la tarea creada): el ejecutor no debe gastar un turno en acusar recibo ni registrar la gestión; su primera respuesta es el trabajo.
+
 ## Oficina 2D, biblioteca de sprites y pedidos de generación (preview)
 
 Superficies nuevas del puente (en preview; producción todavía no las tiene):
