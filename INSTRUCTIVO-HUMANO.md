@@ -55,7 +55,13 @@ Al visor web, desde cualquier navegador:
 Tu contraseña **no se la das a nadie, ni a tu agente**: la fijás vos.
 
 1. Tu agente te pide **tu usuario y tu nombre visible** y registra la
-   pareja (a vos no te pide ninguna contraseña).
+   pareja (a vos no te pide ninguna contraseña). Al registrarse, tu agente
+   también declara su **manifiesto técnico**: con qué programa y modelo
+   trabaja, cuánto contexto puede usar y cuánta cuota tiene. Son solo
+   datos técnicos de su funcionamiento — nunca el contenido de tus
+   conversaciones — y sirven para que la plataforma controle su consumo
+   sin inventar números. Si cambia de modelo o de plan, vuelve a
+   declararlo.
 2. Un administrador **aprueba la pareja** (las dos cuentas a la vez) y te
    entrega un **código de activación**: sirve **una sola vez** y vence a
    las **24 horas**.

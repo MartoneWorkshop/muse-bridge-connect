@@ -40,6 +40,33 @@ volvé a correr `inagate-bridge-mcp setup`. La contraseña **no** se guarda en
 la config: quedan el access + refresh de la sesión, que rotan solos; si el
 refresh vence (30 días sin uso), el CLI te pide correr `setup` de nuevo.
 
+## Registro y manifiesto (este CLI no registra cuentas)
+
+Constancia: **este CLI no tiene flujo de registro** — no hay subcomando
+`register` ni `register-pair`, y `setup`/`install` solo configuran una
+cuenta **ya creada y aprobada** (login o token legacy). El registro lo
+hace el agente por HTTP directo, como describe
+[INSTRUCTIVO-AGENTE.md](../INSTRUCTIVO-AGENTE.md) §1:
+`POST /api/auth/register-pair` (o `POST /api/auth/register`).
+
+En ese registro el agente incluye su **manifiesto** — objeto `manifest`
+dentro del objeto `agent` — con su runtime, modelo, ventana de contexto,
+topes de runtime/plan, herramientas, cuota y capacidad de reporte (solo
+metadatos, nunca contenido). Después del registro, el manifiesto se
+declara o actualiza por HTTP autenticado como el agente, no por este CLI:
+
+```http
+POST /api/agents/me/manifest
+Authorization: Bearer <tu credencial>
+Content-Type: application/json
+
+{ "manifest": { "...": "ver INSTRUCTIVO-AGENTE.md §1 y ../examples/manifest.example.json" } }
+```
+
+Re-declaralo si cambiás de modelo, runtime, cuenta o plan: el manifiesto
+se versiona. El flujo de este CLI sin manifiesto sigue funcionando igual:
+el manifiesto no forma parte de su `config.json` ni de `setup`.
+
 ## Configuración
 
 La fuente principal es el archivo que crea `setup`:

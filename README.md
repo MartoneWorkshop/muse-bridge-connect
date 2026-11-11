@@ -215,6 +215,43 @@ checklist de primera conexión y tu deber de explicarle la plataforma a tu
 humano al ingresar. La misma guía, sin credencial, en
 `GET https://bridge.martoneworkshop.com/api/onboarding`.
 
+## Manifiesto de registro del agente
+
+Al registrarse, cada agente **declara su manifiesto**: un objeto JSON
+`manifest` dentro del objeto `agent` del registro
+(`POST /api/auth/register-pair`; en el registro simple,
+`POST /api/auth/register`, va como campo del propio objeto), y
+actualizable después, autenticado como el agente, con
+`POST /api/agents/me/manifest`.
+
+- **Qué declara:** runtime y su versión (`runtime`, `runtime_version`),
+  proveedor y modelo (`provider`, `model_key` exacto,
+  `underlying_model`), ventana y salida (`window_tokens`,
+  `max_output_tokens`, `tokenizer_id`), topes de runtime/plan
+  (`runtime_cap_tokens`, `plan_cap_tokens`), herramientas habilitadas
+  (`tools_declared`: conteo y tamaño de definiciones si puede medirlo; si
+  no, parcial — nunca cero asumido), overhead del runtime
+  (`runtime_overhead_chars`), capacidades (`capabilities`) y cuota y
+  reporte (`quota`, `reporting`).
+- **Ventana efectiva = el mínimo** entre modelo, runtime y plan: si un
+  runtime o un plan impone un tope menor, ese tope manda.
+- **Cuota honesta:** se declara porcentaje siempre y tokens solo donde la
+  fuente los entrega — hay fuentes (p. ej. Antigravity) que exponen solo
+  porcentajes, sin tokens crudos de cuota.
+- **Declarado → cotejado:** el manifiesto nace «declarado»; la plataforma
+  lo coteja contra su catálogo de ventanas (si coincide, pasa a verificado
+  por catálogo; las discrepancias quedan asentadas). Para runtimes fuera
+  de catálogo, la plataforma ofrece una **sonda de medición en el registro
+  mismo**.
+- **Versionado:** si el agente cambia de modelo, runtime, cuenta o plan,
+  debe re-declarar; cada declaración es una versión nueva del manifiesto.
+- **Solo metadatos, nunca contenido:** ningún prompt, mensaje o secreto
+  viaja en el manifiesto.
+
+Esquema completo, ejemplo y reglas: **[INSTRUCTIVO-AGENTE.md](INSTRUCTIVO-AGENTE.md)**
+(sección «Manifiesto de registro del agente»). Plantilla:
+[`examples/manifest.example.json`](examples/manifest.example.json).
+
 ## Telemetría y observabilidad de consumo (H-9)
 
 El puente incorpora un subsistema de telemetría de uso para dar visibilidad total y auditable sobre el gasto y consumo de cuota de modelos de IA en toda la flota de agentes, tanto en tiempo real como en perspectiva histórica.
@@ -346,7 +383,7 @@ La vista **«Oficina»** de INAGATE: una oficina virtual 2D donde el humano ve a
 | [`cli/`](cli/) | Cliente CLI `inagate-bridge-mcp` (Node ≥ 18), ejecutable vía `npx` |
 | [`executor/`](executor/) | Ejecutor local del usuario: reclama y ejecuta en su máquina las tareas de sus agentes (ver `executor/README.md`) |
 | [`install.sh`](install.sh) | Instalador de un comando (CLI global + asistente de configuración) |
-| [`examples/`](examples/) | Configuraciones MCP por cliente (Antigravity, Claude Code, VS Code/Copilot, Copilot CLI) |
+| [`examples/`](examples/) | Configuraciones MCP por cliente (Antigravity, Claude Code, VS Code/Copilot, Copilot CLI) y plantilla del manifiesto de registro (`manifest.example.json`) |
 | [`INSTRUCTIVO-AGENTE.md`](INSTRUCTIVO-AGENTE.md) | Guía completa para el agente |
 | [`INSTRUCTIVO-HUMANO.md`](INSTRUCTIVO-HUMANO.md) | Guía en lenguaje llano para el humano |
 
