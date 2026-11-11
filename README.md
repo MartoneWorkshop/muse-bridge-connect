@@ -290,12 +290,12 @@ El puente incorpora un subsistema de telemetría de uso para dar visibilidad tot
    - Botones de exportación instantánea `[📥 Exportar CSV]` y `[📄 Exportar JSON]`.
 2. **API administrativa**:
    - `GET /api/admin/usage`: consulta de agregados por rangos (`5h`, `semanal`, `mensual`), agrupados por `modelo`, `cuenta` o `agente`, con soporte nativo de exportación a archivo (`format=csv` o `format=json`).
-   - `POST /api/admin/usage/events`: endpoint de ingesta para registrar eventos de consumo atribuidos con tokens o delta porcentual.
+   - `POST /api/admin/usage/events` (y su alias `POST /api/usage/events`): endpoint de ingesta para registrar eventos de consumo atribuidos con tokens o delta porcentual. **Atribución restringida (CYBER M-01, en producción):** un agente solo puede registrar eventos con su propio `agent_id`; atribuir el evento a otro agente exige rol admin (`admin.all`) o el permiso de matriz `usage.report_others` (migración 050), otorgado por sujeto únicamente a la identidad de servicio del poller (`agy`), que emite por el agente asignado de cada corrida. Sin ese privilegio, la respuesta es `403 usage_attribution_forbidden` y el evento no persiste. También se validan rangos: `tokens_in`/`tokens_out` entre 0 y 10.000.000 y deltas de cuota entre -100 y 100 (fuera de rango: `400`).
 3. **Kit de corrida (`tools/agy-runner/`)**:
    - Módulos `run-usage-emitter.mjs` y `emit-run-usage.mjs` que permiten envolver cualquier corrida de tareas (`wrap`) o registrar manualmente su inicio y cierre (`start` / `close`), calculando el diferencial exacto de cuota y emitiendo el evento al puente.
 
 > [!NOTE]
-> **Alcance de gobierno:** La telemetría H-9 es una capacidad de observabilidad y control para el dueño y los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA el catálogo suma la tool de cierre EP-1: **17 tools `bridge_*`** vigentes, sin sobrecargar la superficie de interoperabilidad de los agentes.
+> **Alcance de gobierno:** La telemetría H-9 es una capacidad de observabilidad y control para el dueño y los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA suma 19 tools `bridge_*` vigentes (incluidas la de cierre EP-1 y las dos del presupuesto de contexto: `bridge_get_context_budget` y `bridge_declare_manifest`), sin sobrecargar la superficie de interoperabilidad de los agentes.
 
 ## Conversación con la empresa en tiempo real (Fase 1)
 
@@ -354,6 +354,18 @@ El dueño (o un socio activo) de una empresa se lleva toda su documentación de 
 - **Enlace temporal y no-retención:** el enlace vive 24 horas (token de un solo uso visible una sola vez, en base solo su hash); regenerar invalida la exportación anterior y borra su ZIP. La plataforma no guarda copia del paquete: si el dueño lo pierde, genera otro.
 - **Lo que NO viaja en v1:** conversaciones ni tareas en crudo — solo el índice de metadatos. La fase 2 (crudos) queda condicionada a verificar el mapeo conversación→empresa y a la decisión del dueño sobre mensajes humano↔humano.
 
+## KPIs del Archivero (en producción)
+
+La respuesta de `GET /api/reports/stats` incluye un bloque `kpis` calculado en el servidor, con el mismo alcance de visibilidad del llamador que el resto de la respuesta (super global; el humano ve lo suyo y su plantel; el agente, sus proyectos y su legajo):
+
+- `total_reports`: total de informes en alcance (idéntico a `summary.total`).
+- `vigencia_rate`: porcentaje de informes vigentes sobre el total, con 1 decimal (`0` si no hay informes).
+- `active_dossiers`: empleados distintos con al menos un informe vigente en alcance.
+- `total_employees`: universo de empleados del llamador — su plantel visible (empleados propios y de las empresas donde es miembro, o los asignados a sus proyectos) unido a los empleados con informes dentro del alcance, para que el denominador nunca sea menor que los legajos visibles; los filtros `project_id`/`department_id`/`employee_id` acotan ambas partes.
+- `crypto_sealed_percent`: porcentaje de informes **con archivo** cuyo archivo (`files.sha256`) tiene hash registrado, sobre los informes con archivo. Si ningún informe del alcance tiene archivo, el valor es `null` (sin denominador no hay porcentaje).
+
+La vista del Archivero consume este bloque: ya no calcula KPIs en el cliente ni usa valores de relleno.
+
 ## Ciclo de vida de tareas — Fase B (en producción)
 
 Desde Fase B, el puente gobierna el ciclo de vida de cada tarea con una sola máquina de estados, como norma de plataforma (migración 044):
@@ -377,7 +389,9 @@ La configuración del autodispatcher (pesos de señales, frases personalizadas y
 - Una empresa puede **compartirse con otro humano** con rol **`invitado` (solo lectura)**: el dueño invita desde el panel de miembros de su empresa; el invitado acepta o rechaza; el dueño puede suspender, reactivar o revocar, con corte de acceso inmediato y cada transición registrada en auditoría.
 - El invitado ve únicamente esa empresa: estructura, departamentos, empleados asignados y documentos de la empresa en Archiveros (filtrados por `company_id`, con el acceso lateral por proyecto cerrado para ese caso). No escribe en ningún endpoint, no accede a conversaciones de ámbito, Registro de Prompts ni memorias, y no ve ninguna otra empresa del mismo dueño. Los no-miembros reciben 404 en todos los endpoints de la empresa.
 - API: `GET/POST /api/companies/:cid/members`, `PATCH/POST /api/companies/:cid/members/:human_id[/suspend|/reactivate|/revoke]`, `GET /api/company-invitations`, `POST /api/company-invitations/:cid/accept|reject` (migración 039, tabla `company_members`).
-- **Pendiente (en diseño, no disponible):** roles colaborador/socio y sus escrituras, agentes de miembros, aprobaciones por miembros, atribución de cuota entre dueños y transferencia de propiedad.
+- **Sustrato de propiedad, confianza y departamentos (migración 042, en producción):** los dueños de cada empresa quedan registrados en `company_owners` (un `creator` — quien la creó — y hasta un `co-owner`); cada dueño puede fijar **su propio** agente de confianza en `company_trusted_agents` (el agente debe ser de su propiedad y estar activo); y los departamentos de cada miembro se asignan explícitamente en `company_member_departments` (solo departamentos de la misma empresa). Toda mutación queda registrada en auditoría y todo acceso fuera de la relación exacta devuelve **404** (los IDs ajenos no se confirman).
+  - API: `GET /api/companies/:cid/owners` (dueño/socio), `POST /api/companies/:cid/owners/invite` (solo el creator; `409` si el slot de co-dueño está ocupado), `DELETE /api/companies/:cid/owners/:human_id` (el creator es irremovible por esta vía; el co-dueño puede darse de baja), `GET /api/companies/:cid/trusted-agents` (dueños/socio), `PUT /api/companies/:cid/trusted-agents/me` (solo creator/co-owner, con un agente propio y activo), `GET /api/companies/:cid/members/:human_id/departments` (dueño/socio/el propio miembro), `PUT /api/companies/:cid/members/:human_id/departments` (dueño/socio; reemplazo en bloque validado contra la empresa).
+- **Pendiente (en diseño, no disponible):** la vista acotada del colaborador en listados, conversaciones de ámbito y eventos en vivo, agentes de miembros dentro de la empresa, aprobaciones con doble check, atribución y delegación de cuota entre dueños, y transferencia de propiedad.
 
 ## Oficina 2D y biblioteca pública de sprites (en preview)
 

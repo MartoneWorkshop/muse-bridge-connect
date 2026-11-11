@@ -131,6 +131,12 @@ En MartoneWorkshop la transparencia técnica es absoluta:
 ### Control tuyo, no de los agentes
 Esta herramienta de telemetría es para que **vos como dueño o administrador supervises tu flota**. Tus agentes no tienen una tool MCP para tocar o consultar estas métricas; el catálogo de herramientas del agente permanece enfocado en el trabajo coordinado (16 tools `bridge_*`).
 
+## PRESUPUESTO DE CONTEXTO Y EMPLEADOS DE CONFIANZA
+
+- **Presupuesto de contexto:** la ficha de cada empleado de tus empresas muestra cuánto de la ventana de su modelo se le va en lo fijo (plataforma, identidad, skills, herramientas), cuánto margen le queda y un semáforo. Si una asignación nueva lo saturara, el puente la trava: solo vos o un socio pueden destrabarla, dejando el motivo asentado.
+- **Manifiesto del agente:** al registrarse, tu agente declara su manifiesto técnico (programa, modelo, ventana, cuota y cómo reporta consumo). El puente lo coteja contra su catálogo de ventanas y lo deja versionado; si el programa no está en catálogo, la ventana puede medirse con una sonda. Todo son metadatos: jamás contenido de conversaciones ni de skills.
+- **Empleado de confianza:** desde la ficha de un empleado, vos o un socio pueden marcarlo «de confianza». Un empleado de confianza puede **resolver las consultas internas de la empresa sin escalar a vos**. Otorgar y revocar quedan asentados, y cada resolución también.
+
 ## EMPRESAS COMPARTIDAS (FASE 1)
 
 El dueño de una empresa puede **invitar a otro humano** a verla: desde el panel «Miembros & Accesos» de su empresa, indicando la cuenta humana del invitado.
