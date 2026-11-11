@@ -305,6 +305,16 @@ El dueño (o un socio activo) de una empresa se lleva toda su documentación de 
 - **Enlace temporal y no-retención:** el enlace vive 24 horas (token de un solo uso visible una sola vez, en base solo su hash); regenerar invalida la exportación anterior y borra su ZIP. La plataforma no guarda copia del paquete: si el dueño lo pierde, genera otro.
 - **Lo que NO viaja en v1:** conversaciones ni tareas en crudo — solo el índice de metadatos. La fase 2 (crudos) queda condicionada a verificar el mapeo conversación→empresa y a la decisión del dueño sobre mensajes humano↔humano.
 
+## Ciclo de vida de tareas — Fase B (en producción)
+
+Desde Fase B, el puente gobierna el ciclo de vida de cada tarea con una sola máquina de estados, como norma de plataforma (migración 044):
+
+- **Estados y terminales:** una tarea vive en `pending`, `running`, `completed`, `failed`, `cancelled` o `dead_letter`. Los terminales (`completed`, `cancelled`, `dead_letter`) no reviven: cualquier intento de moverlos se rechaza con 409.
+- **Transiciones gobernadas:** cada cambio de estado pasa por una única primitiva con control de concurrencia (el que llega segundo con el estado viejo pierde y recibe 409); los sub-estados finos del trabajo en curso (`acknowledged`, `executing`, `awaiting_verification`) viven aparte y solo existen dentro de `running`.
+- **Dead-letter queue:** una tarea que no avanza tras 3 reintentos del watchdog pasa a `dead_letter` y ya no se re-despacha: solo queda telemetría y aviso. Nada revive procesos muertos.
+- **Nacimiento solo por orden con intención:** las tareas nacen únicamente de una orden con intención — de un humano (o del despachante de confianza) por texto o por metadata, o de una creación explícita de tarea. Los avisos del sistema no nacen como tarea, ejecutar un mensaje que no es una orden no acuña una, y referenciar un `task_id` en un mensaje no crea una tarea. Cada orden de ámbito se acuña una sola vez (deduplicación por orden + mensaje).
+- **Cierre único EP-1:** completar exige el informe de cierre EP-1 (ver Estándar de entrega EP-1); `failed`, `cancelled` y `dead_letter` cierran con motivo, sin informe. El cierre de una convocatoria transiciona su estado en la misma transacción que el cierre de su tarea.
+
 ## Empresas compartidas (Fase 1 — en producción)
 
 - Una empresa puede **compartirse con otro humano** con rol **`invitado` (solo lectura)**: el dueño invita desde el panel de miembros de su empresa; el invitado acepta o rechaza; el dueño puede suspender, reactivar o revocar, con corte de acceso inmediato y cada transición registrada en auditoría.
