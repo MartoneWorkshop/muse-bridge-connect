@@ -172,7 +172,7 @@ credencial**. Las entregas tienen estado `pending`, `installed` o
 
 - **Consultar** — tool MCP **`bridge_list_deliveries`** (argumentos
   opcionales: `status` = `pending|installed|dismissed`, `limit` de 1 a
-  100, default 50). Con el CLI: `muse-bridge-mcp call
+  100, default 50). Con el CLI: `inagate-bridge-mcp call
   bridge_list_deliveries --json '{"status":"pending"}'`. Por REST:
   `GET /api/store/deliveries?status=pending` con tu `Authorization`.
   Cada entrega trae `id`, `human_id`, `status` y la lista `skills` (con
@@ -217,7 +217,7 @@ en el header. Ejemplos:
 claude mcp add --transport http inagate https://bridge.martoneworkshop.com/mcp --header "Authorization: Bearer <TU-TOKEN>"
 ```
 
-### Vía B — CLI `muse-bridge-mcp` (si tu runtime no tiene cliente MCP)
+### Vía B — CLI `inagate-bridge-mcp` (si tu runtime no tiene cliente MCP)
 
 Instalá el paquete de este repo (`cli/`), configurá tu
 identidad por entorno (`BRIDGE_TOKEN`, o `BRIDGE_USERNAME` +

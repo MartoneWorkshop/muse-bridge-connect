@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * muse-bridge-executor — Ejecutor del lado del usuario (kit muse-bridge-connect) v1.
+ * inagate-bridge-executor — Ejecutor del lado del usuario (kit inagate-bridge-connect) v1.
  *
  * Corre EN LA COMPUTADORA DEL USUARIO, con SUS credenciales y SU runtime/cuota.
  * Implementa el diseño «Ejecutor del lado del usuario v1» (INAGATE):
@@ -25,7 +25,7 @@
  * del kit con `token`, o archivo de token 0600). Ver executor/README.md.
  *
  * Uso:
- *   node executor/muse-bridge-executor.mjs [--config <executor.json>]
+ *   node executor/inagate-bridge-executor.mjs [--config <executor.json>]
  *                                           [--dry-run] [--once]
  */
 import {
@@ -94,22 +94,22 @@ function parseArgs(argv) {
   return out;
 }
 
-const HELP = `muse-bridge-executor — ejecutor local de tareas de INAGATE (lado del usuario)
+const HELP = `inagate-bridge-executor — ejecutor local de tareas de INAGATE (lado del usuario)
 
 Uso:
-  node executor/muse-bridge-executor.mjs [--config <ruta>] [--dry-run] [--once]
+  node executor/inagate-bridge-executor.mjs [--config <ruta>] [--dry-run] [--once]
 
   --config <ruta>  Config del ejecutor (default: $BRIDGE_EXECUTOR_CONFIG o
-                   ~/.config/muse-bridge-mcp/executor.json)
+                   ~/.config/inagate-bridge-mcp/executor.json)
   --dry-run        Lista y muestra qué reclamaría/ejecutaría, sin reclamar
                    ni ejecutar ni reportar.
   --once           Un solo ciclo y salir (útil para timers/cron y pruebas).
 
 La URL del puente y la credencial por defecto salen de la config del kit
-(cli/auth.mjs: ~/.config/muse-bridge-mcp/config.json o entorno BRIDGE_*).
+(cli/auth.mjs: ~/.config/inagate-bridge-mcp/config.json o entorno BRIDGE_*).
 Ver executor/README.md y executor/executor.example.json.`;
 
-const DEFAULT_EXECUTOR_CONFIG = join(homedir(), '.config', 'muse-bridge-mcp', 'executor.json');
+const DEFAULT_EXECUTOR_CONFIG = join(homedir(), '.config', 'inagate-bridge-mcp', 'executor.json');
 
 function loadExecutorConfig(args) {
   const path = expandHome(args.config || process.env.BRIDGE_EXECUTOR_CONFIG || DEFAULT_EXECUTOR_CONFIG);
@@ -130,7 +130,7 @@ function loadExecutorConfig(args) {
     allowed_requesters: Array.isArray(raw.allowed_requesters)
       ? raw.allowed_requesters.map((s) => String(s).trim().toLowerCase()).filter(Boolean)
       : [],
-    log_dir: expandHome(raw.log_dir || '~/.local/state/muse-bridge-executor/logs'),
+    log_dir: expandHome(raw.log_dir || '~/.local/state/inagate-bridge-executor/logs'),
     timeout_ms: Number(raw.timeout_ms) > 0 ? Number(raw.timeout_ms) : 1800000,
     presence_updates: raw.presence_updates === true,
     max_consecutive_errors: Number(raw.max_consecutive_errors) > 0 ? Number(raw.max_consecutive_errors) : 5,
@@ -345,7 +345,7 @@ async function claimViaMcp(cfg, agentId, taskId, actionRequestId) {
   const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`), {
     requestInit: { headers: { Authorization: `Bearer ${token}` } },
   });
-  const client = new Client({ name: 'muse-bridge-executor', version: '1.0.0' }, { capabilities: {} });
+  const client = new Client({ name: 'inagate-bridge-executor', version: '1.0.0' }, { capabilities: {} });
   try {
     await client.connect(transport);
     const args = { task_id: taskId };
@@ -470,7 +470,7 @@ async function emitTelemetry(cfg, logger, agentId, task, prompt, execRes, finalS
       author_agent_id: agentId,
       task_id: task.id,
       instruction_text: truncate(prompt, 4000),
-      observations_text: `Ejecución local mediante muse-bridge-executor (runtime del usuario).`,
+      observations_text: `Ejecución local mediante inagate-bridge-executor (runtime del usuario).`,
       proposal_text: 'Ejecución directa en el equipo del usuario.',
       implementation_text: truncate(execRes.stdout || execRes.stderr || 'Sin salida.', 5000),
       file: {
@@ -761,7 +761,7 @@ async function main() {
   if (!args.dryRun && !cfg.runtime_command) {
     throw new Error('la config del ejecutor no declara "runtime_command" (el runtime local del usuario).');
   }
-  logger.info(null, null, `muse-bridge-executor v1 iniciado — puente: ${KIT_BRIDGE_URL} — agentes: ${cfg.agents.join(', ')} — modo: ${args.once ? 'once' : 'loop'}${args.dryRun ? ' (dry-run)' : ''} — transición: ${cfg.transition_mode}.`);
+  logger.info(null, null, `inagate-bridge-executor v1 iniciado — puente: ${KIT_BRIDGE_URL} — agentes: ${cfg.agents.join(', ')} — modo: ${args.once ? 'once' : 'loop'}${args.dryRun ? ' (dry-run)' : ''} — transición: ${cfg.transition_mode}.`);
 
   for (const a of cfg.agents) await setPresence(cfg, logger, a, 'online', 'Ejecutor local en línea');
   let stopping = false;

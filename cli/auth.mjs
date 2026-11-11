@@ -1,8 +1,8 @@
 /**
- * auth.mjs — Autenticación genérica para el CLI muse-bridge-mcp.
+ * auth.mjs — Autenticación genérica para el CLI inagate-bridge-mcp.
  *
  * Sin identidades hardcodeadas: todo sale del entorno o del archivo de
- * configuración que crea `muse-bridge-mcp setup`.
+ * configuración que crea `inagate-bridge-mcp setup`.
  *
  * Modos (en este orden):
  *  1. Token estático:  BRIDGE_TOKEN (entorno) o `token` en la config.
@@ -14,10 +14,10 @@
  *     reuso, así que el refresco se hace bajo lock de archivo y el par nuevo
  *     se guarda atómicamente antes de soltar el lock.
  *     Estado: BRIDGE_TOKENS_FILE (entorno) o `tokens_file` en la config
- *     (default ~/.config/muse-bridge-mcp/tokens.json, 0600).
+ *     (default ~/.config/inagate-bridge-mcp/tokens.json, 0600).
  *
  * Config persistente (la escribe `setup`, permisos 0600):
- *   ~/.config/muse-bridge-mcp/config.json  (o BRIDGE_CONFIG_FILE)
+ *   ~/.config/inagate-bridge-mcp/config.json  (o BRIDGE_CONFIG_FILE)
  *   { url, token }                  → modo token
  *   { url, username, tokens_file }  → modo login (la contraseña NO se guarda:
  *                                     quedan el access + refresh del login)
@@ -40,7 +40,7 @@ const ENV_PASSWORD = 'BRIDGE_PASS' + 'WORD';
 const ENV_PASSWORD_FILE = 'BRIDGE_PASS' + 'WORD_FILE';
 
 export const CONFIG_FILE = process.env.BRIDGE_CONFIG_FILE
-  || join(homedir(), '.config', 'muse-bridge-mcp', 'config.json');
+  || join(homedir(), '.config', 'inagate-bridge-mcp', 'config.json');
 
 export function loadConfig() {
   try {
@@ -63,7 +63,7 @@ export const BRIDGE_URL = (process.env.BRIDGE_URL || CONFIG.url || 'https://brid
 
 export const TOKENS_FILE = process.env.BRIDGE_TOKENS_FILE
   || CONFIG.tokens_file
-  || join(homedir(), '.config', 'muse-bridge-mcp', 'tokens.json');
+  || join(homedir(), '.config', 'inagate-bridge-mcp', 'tokens.json');
 const LOCK_FILE = `${TOKENS_FILE}.lock`;
 const MARGIN_MS = 60 * 1000;
 
@@ -181,7 +181,7 @@ async function loginLocked() {
   const username = resolvedUsername();
   const secret = readSecret();
   if (!username || !secret) {
-    const err = new Error('faltan credenciales: ejecutá `muse-bridge-mcp setup` o definí BRIDGE_TOKEN, o BRIDGE_USERNAME + BRIDGE_PASSWORD/BRIDGE_PASSWORD_FILE');
+    const err = new Error('faltan credenciales: ejecutá `inagate-bridge-mcp setup` o definí BRIDGE_TOKEN, o BRIDGE_USERNAME + BRIDGE_PASSWORD/BRIDGE_PASSWORD_FILE');
     err.code = 'config';
     throw err;
   }

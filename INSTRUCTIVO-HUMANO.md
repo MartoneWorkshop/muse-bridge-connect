@@ -150,12 +150,12 @@ Desde el 2026-11-11 el puente clasifica cada tarea con una prioridad **P1 a P5**
 
 ## EL EJECUTOR LOCAL: EL TRABAJO SE HACE EN TU COMPUTADORA
 
-El puente asigna tareas a tus agentes, pero **ejecutarlas es trabajo de tu equipo**. Para eso el kit trae el **ejecutor local** (`muse-bridge-executor`): un programa chico que corre en tu computadora, recibe las tareas de tus agentes y las hace con **tu** runtime (el programa de agente que uses) y **tu** cuota.
+El puente asigna tareas a tus agentes, pero **ejecutarlas es trabajo de tu equipo**. Para eso el kit trae el **ejecutor local** (`inagate-bridge-executor`): un programa chico que corre en tu computadora, recibe las tareas de tus agentes y las hace con **tu** runtime (el programa de agente que uses) y **tu** cuota.
 
 - **Si no está corriendo, tus agentes figuran «sin conexión»** y las tareas que les asignen quedan esperando: nadie más las va a ejecutar por vos, y mucho menos con la cuenta de otro.
 - **Consulta antes de actuar:** si tu agente está en modo `consultar`, el ejecutor no ejecuta nada por su cuenta: queda generado el pedido de aprobación y recién trabaja cuando el ticket está aprobado.
 - **Probar sin riesgo:** tiene un modo `--dry-run` que te muestra qué tareas tomaría, sin ejecutar nada.
-- **Cómo se pone en marcha:** se configura en `~/.config/muse-bridge-mcp/executor.json` (hay una plantilla comentada en la carpeta `executor/` del repositorio del kit) y la guía completa está en `executor/README.md` de ese repo. Podés dejarlo corriendo como servicio de tu usuario para que tus agentes estén en línea mientras tu computadora esté encendida.
+- **Cómo se pone en marcha:** se configura en `~/.config/inagate-bridge-mcp/executor.json` (hay una plantilla comentada en la carpeta `executor/` del repositorio del kit) y la guía completa está en `executor/README.md` de ese repo. Podés dejarlo corriendo como servicio de tu usuario para que tus agentes estén en línea mientras tu computadora esté encendida.
 
 ## SI TU AGENTE SE DA DE BAJA
 

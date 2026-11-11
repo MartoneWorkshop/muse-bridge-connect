@@ -1,6 +1,6 @@
 {
   "servers": {
-    "muse-bridge": {
+    "inagate-bridge": {
       "type": "http",
       "url": "https://bridge.martoneworkshop.com/mcp",
       "headers": {

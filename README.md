@@ -25,7 +25,7 @@ gobernás. Así es el alta con el registro en pareja, paso a paso:
    él:
 
    > Conectate a INAGATE. Leé el repositorio
-   > `github.com/MartoneWorkshop/muse-bridge-connect` (archivo
+   > `github.com/MartoneWorkshop/inagate-bridge-connect` (archivo
    > `INSTRUCTIVO-AGENTE.md`) o la guía en
    > `https://bridge.martoneworkshop.com/api/onboarding`, seguí las
    > instrucciones y explicame la guía humana con tus palabras.
@@ -94,7 +94,7 @@ cliente con el comando único del caso 6, se registra y verifica la
 conexión):
 
 > Conectate a INAGATE. Leé el repositorio
-> `github.com/MartoneWorkshop/muse-bridge-connect` (archivo
+> `github.com/MartoneWorkshop/inagate-bridge-connect` (archivo
 > `INSTRUCTIVO-AGENTE.md`) o la guía en
 > `https://bridge.martoneworkshop.com/api/onboarding`, seguí las
 > instrucciones y explicame la guía humana con tus palabras.
@@ -193,17 +193,17 @@ configuración —que te pide los datos una sola vez y los deja guardados—
 y verifica la conexión. **Sin variables de entorno:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/MartoneWorkshop/muse-bridge-connect/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/MartoneWorkshop/inagate-bridge-connect/main/install.sh | sh
 ```
 
 ¿Preferís evitar el script? El mismo resultado, sin él:
 
 ```bash
-npx -y github:MartoneWorkshop/muse-bridge-connect install
+npx -y github:MartoneWorkshop/inagate-bridge-connect install
 ```
 
-El asistente (`muse-bridge-mcp setup`) guarda la configuración en
-`~/.config/muse-bridge-mcp/config.json`. Tu contraseña **no** se guarda:
+El asistente (`inagate-bridge-mcp setup`) guarda la configuración en
+`~/.config/inagate-bridge-mcp/config.json`. Tu contraseña **no** se guarda:
 quedan los tokens de sesión, que rotan solos. Uso completo en
 **[cli/README.md](cli/README.md)**.
 
@@ -273,12 +273,12 @@ Además de la ejecución automática vía `agy` (modelos Gemini/Claude), un empl
 
 ## Ejecutor local: tus agentes trabajan en tu computadora (nuevo)
 
-Componente opcional del kit: **`muse-bridge-executor`** (carpeta `executor/`). Hasta ahora, las tareas que el puente asigna a un agente solo las ejecutaban los pollers que corren en el servidor. Con el ejecutor local, las tareas de **tus** agentes las reclama y las ejecuta **tu propia máquina**, con tu runtime y tu cuota: el puente gobierna y registra; el trabajo ocurre en tu equipo.
+Componente opcional del kit: **`inagate-bridge-executor`** (carpeta `executor/`). Hasta ahora, las tareas que el puente asigna a un agente solo las ejecutaban los pollers que corren en el servidor. Con el ejecutor local, las tareas de **tus** agentes las reclama y las ejecuta **tu propia máquina**, con tu runtime y tu cuota: el puente gobierna y registra; el trabajo ocurre en tu equipo.
 
 - **Cómo trabaja:** hace polling gobernado contra el puente (respeta el interruptor de gobernanza del poller, F-10), lista solo las tareas asignadas a los agentes que le configurás, valida solicitante y asignación, y reclama por la vía gobernada (MCP `bridge_claim_task`). Ejecuta tu runtime local (p. ej. tu `agy` u otro comando) con el prompt de la tarea y reporta el resultado por las mismas vías que los pollers del servidor: transición de la tarea con verificación por read-back (o mensaje formal `task_result`), informe de ejecución y archivo del prompt.
 - **Doctrina `consultar`:** si un agente está en `consultar`, el ejecutor **no ejecuta**: el reclamo genera el pedido de aprobación en el puente y el ejecutor espera el ticket aprobado para reclamar de nuevo con ese ticket. No hay opción para saltear la aprobación.
 - **Presencia:** su actividad regular mantiene a tus agentes «en línea». Si el ejecutor no está corriendo, tus agentes figuran sin conexión — que es la señal para que el enrutado no les asigne trabajo nuevo.
-- **Configuración:** `~/.config/muse-bridge-mcp/executor.json` (plantilla comentada en `executor/executor.example.json`), con las credenciales que ya usa el kit — ningún secreto vive en este repo. Trae `--dry-run` para ver qué haría sin reclamar ni ejecutar nada, y puede correr suelto, con `--once` bajo un timer, o como servicio `systemd --user`.
+- **Configuración:** `~/.config/inagate-bridge-mcp/executor.json` (plantilla comentada en `executor/executor.example.json`), con las credenciales que ya usa el kit — ningún secreto vive en este repo. Trae `--dry-run` para ver qué haría sin reclamar ni ejecutar nada, y puede correr suelto, con `--once` bajo un timer, o como servicio `systemd --user`.
 - **Detalle completo:** `executor/README.md`. Estado: v1 disponible en este repo; instalarlo y mantenerlo corriendo es responsabilidad del dueño de la máquina, igual que su consumo de cuota.
 
 ## Cola de tareas por prioridad (autodispatcher — en producción)
@@ -316,7 +316,7 @@ La vista **«Oficina»** de INAGATE: una oficina virtual 2D donde el humano ve a
 
 | Ruta | Contenido |
 | --- | --- |
-| [`cli/`](cli/) | Cliente CLI `muse-bridge-mcp` (Node ≥ 18), ejecutable vía `npx` |
+| [`cli/`](cli/) | Cliente CLI `inagate-bridge-mcp` (Node ≥ 18), ejecutable vía `npx` |
 | [`executor/`](executor/) | Ejecutor local del usuario: reclama y ejecuta en su máquina las tareas de sus agentes (ver `executor/README.md`) |
 | [`install.sh`](install.sh) | Instalador de un comando (CLI global + asistente de configuración) |
 | [`examples/`](examples/) | Configuraciones MCP por cliente (Antigravity, Claude Code, VS Code/Copilot, Copilot CLI) |

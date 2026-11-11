@@ -1,4 +1,4 @@
-# Ejecutor del lado del usuario — muse-bridge-connect
+# Ejecutor del lado del usuario — inagate-bridge-connect
 
 El ejecutor es el componente del kit que corre **en tu computadora** y hace que
 tus agentes de INAGATE trabajen: sondea el puente, reclama las tareas asignadas
@@ -45,15 +45,15 @@ tope de ciclos con error (`max_consecutive_errors`) tras el cual se pausa.
 
 ## Configuración
 
-1. Primero configurá el kit como siempre (`muse-bridge-mcp setup`): eso crea
-   `~/.config/muse-bridge-mcp/config.json` con la URL del puente y tu
+1. Primero configurá el kit como siempre (`inagate-bridge-mcp setup`): eso crea
+   `~/.config/inagate-bridge-mcp/config.json` con la URL del puente y tu
    credencial (token legacy o sesión login). El ejecutor reutiliza ese módulo
    de autenticación; no guarda secretos propios.
 2. Copiá la plantilla y completala:
 
    ```sh
-   cp executor/executor.example.json ~/.config/muse-bridge-mcp/executor.json
-   chmod 600 ~/.config/muse-bridge-mcp/executor.json
+   cp executor/executor.example.json ~/.config/inagate-bridge-mcp/executor.json
+   chmod 600 ~/.config/inagate-bridge-mcp/executor.json
    ```
 
    Campos (ver también la plantilla comentada en `credentials._comentario`):
@@ -69,7 +69,7 @@ tope de ciclos con error (`max_consecutive_errors`) tras el cual se pausa.
    | `log_dir` | Logs por ciclo (`executor.log`) y por tarea (`<task_id>.log`) + estado local. |
    | `timeout_ms` | Timeout por ejecución del runtime. |
    | `presence_updates` | `true` para presencia rica al arrancar/parar. |
-   | `credentials` | Opcional, por agente: `{ "config_file": "~/.config/muse-bridge-mcp/agents/<agente>.json" }` (un `config.json` del kit con su `token`) o `{ "token_file": "~/.config/muse-bridge/agente.token" }` (archivo 0600 con el token legacy). Sin entradas, se usa la credencial compartida del kit. |
+   | `credentials` | Opcional, por agente: `{ "config_file": "~/.config/inagate-bridge-mcp/agents/<agente>.json" }` (un `config.json` del kit con su `token`) o `{ "token_file": "~/.config/inagate-bridge/agente.token" }` (archivo 0600 con el token legacy). Sin entradas, se usa la credencial compartida del kit. |
 
    La URL del puente y la credencial salen de la config/auth del kit
    (`BRIDGE_URL`, `BRIDGE_TOKEN`, `BRIDGE_CONFIG_FILE`, etc. tienen prioridad
@@ -79,33 +79,33 @@ tope de ciclos con error (`max_consecutive_errors`) tras el cual se pausa.
 
 ```sh
 # Ciclo continuo (default)
-node executor/muse-bridge-executor.mjs
+node executor/inagate-bridge-executor.mjs
 
 # Un solo ciclo (timers, cron, pruebas)
-node executor/muse-bridge-executor.mjs --once
+node executor/inagate-bridge-executor.mjs --once
 
 # Prueba en seco: lista y muestra qué haría, sin reclamar ni ejecutar
-node executor/muse-bridge-executor.mjs --dry-run --once
+node executor/inagate-bridge-executor.mjs --dry-run --once
 
 # Config en otra ruta
-node executor/muse-bridge-executor.mjs --config ~/executor-prueba.json --once
+node executor/inagate-bridge-executor.mjs --config ~/executor-prueba.json --once
 ```
 
-También queda expuesto como binario del paquete: `muse-bridge-executor`
+También queda expuesto como binario del paquete: `inagate-bridge-executor`
 (ver `bin` en el `package.json` del kit).
 
 ### Dejarlo corriendo con systemd --user
 
 ```ini
-# ~/.config/systemd/user/muse-bridge-executor.service
+# ~/.config/systemd/user/inagate-bridge-executor.service
 [Unit]
-Description=Ejecutor local de INAGATE (muse-bridge-connect)
+Description=Ejecutor local de INAGATE (inagate-bridge-connect)
 After=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/dev/muse-bridge-connect
-ExecStart=/usr/bin/node %h/dev/muse-bridge-connect/executor/muse-bridge-executor.mjs
+WorkingDirectory=%h/dev/inagate-bridge-connect
+ExecStart=/usr/bin/node %h/dev/inagate-bridge-connect/executor/inagate-bridge-executor.mjs
 Restart=on-failure
 RestartSec=30
 
@@ -115,8 +115,8 @@ WantedBy=default.target
 
 ```sh
 systemctl --user daemon-reload
-systemctl --user enable --now muse-bridge-executor.service
-journalctl --user -u muse-bridge-executor.service -f   # o el executor.log de log_dir
+systemctl --user enable --now inagate-bridge-executor.service
+journalctl --user -u inagate-bridge-executor.service -f   # o el executor.log de log_dir
 ```
 
 Alternativa sin servicio residente: un timer/cron que corra el ejecutor con

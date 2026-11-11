@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * muse-bridge-mcp — CLI genérico para el MCP remoto de muse-bridge.
+ * inagate-bridge-mcp — CLI genérico para el MCP remoto de inagate-bridge.
  *
  * Sirve para CUALQUIER agente: la identidad sale de la configuración
  * (variables de entorno), nunca del código. Ver README.md.
  *
- * Uso: muse-bridge-mcp <subcomando> [flags]
+ * Uso: inagate-bridge-mcp <subcomando> [flags]
  * Salida: JSON por stdout. Errores por stderr.
  * Códigos de salida: 0 ok · 1 uso/config · 2 conexión/auth · 3 error de la tool.
  */
@@ -37,7 +37,7 @@ const COMMANDS = {
   'list-deliveries': { tool: 'bridge_list_deliveries', flags: { 'status': 'status', 'limit': 'limit' } },
 };
 
-const HELP = `muse-bridge-mcp — cliente CLI genérico para el MCP de muse-bridge
+const HELP = `inagate-bridge-mcp — cliente CLI genérico para el MCP de inagate-bridge
 
 Instalación y configuración:
   install                              Instala el CLI global (npm) y lanza el asistente
@@ -63,7 +63,7 @@ Subcomandos (uno por tool del servidor):
   call <tool> --json '{...}'                   Llamada genérica a cualquier tool
 
 Configuración:
-  Archivo (lo crea setup): ~/.config/muse-bridge-mcp/config.json
+  Archivo (lo crea setup): ~/.config/inagate-bridge-mcp/config.json
     { url, token }  o  { url, username, tokens_file } — la contraseña no se guarda.
   Entorno (pisa al archivo): BRIDGE_URL, BRIDGE_TOKEN, BRIDGE_USERNAME,
     BRIDGE_PASSWORD / BRIDGE_PASSWORD_FILE, BRIDGE_TOKENS_FILE, BRIDGE_CONFIG_FILE
@@ -103,7 +103,7 @@ async function connect(token, baseUrl = BRIDGE_URL) {
   const transport = new StreamableHTTPClientTransport(new URL(`${baseUrl}/mcp`), {
     requestInit: { headers: { Authorization: `Bearer ${token}` } },
   });
-  const client = new Client({ name: 'muse-bridge-mcp', version: '1.0.0' });
+  const client = new Client({ name: 'inagate-bridge-mcp', version: '1.0.0' });
   await client.connect(transport);
   return client;
 }
@@ -286,7 +286,7 @@ async function runSetupFlow(argv) {
   }
 
   const tokensFile = flags['tokens-file'] || prev.tokens_file
-    || join(homedir(), '.config', 'muse-bridge-mcp', 'tokens.json');
+    || join(homedir(), '.config', 'inagate-bridge-mcp', 'tokens.json');
   const cfg = { url };
 
   if (mode === 'token') {
@@ -306,13 +306,13 @@ async function runSetupFlow(argv) {
     const access = await loginAndStore({ url, username, password, tokensFile });
     const names = await verifyConnection(access, url);
     cfg.username = username;
-    if (tokensFile !== join(homedir(), '.config', 'muse-bridge-mcp', 'tokens.json')) cfg.tokens_file = tokensFile;
+    if (tokensFile !== join(homedir(), '.config', 'inagate-bridge-mcp', 'tokens.json')) cfg.tokens_file = tokensFile;
     saveConfig(cfg);
     console.log(`✓ Sesión iniciada como ${username} en ${url} (${names.length} tools).`);
   }
 
   console.log(`✓ Configuración guardada en ${CONFIG_FILE} (sin variables de entorno).`);
-  console.log('Probá: muse-bridge-mcp list-agents');
+  console.log('Probá: inagate-bridge-mcp list-agents');
 }
 
 async function runInstall(argv) {
@@ -321,13 +321,13 @@ async function runInstall(argv) {
   } catch {
     fail(1, 'no se encontró npm: instalá Node.js >= 18 (incluye npm) y reintentá');
   }
-  console.log('Instalando muse-bridge-mcp globalmente (npm install -g github:MartoneWorkshop/muse-bridge-connect)…');
+  console.log('Instalando inagate-bridge-mcp globalmente (npm install -g github:MartoneWorkshop/inagate-bridge-connect)…');
   try {
-    execFileSync('npm', ['install', '-g', 'github:MartoneWorkshop/muse-bridge-connect'], { stdio: 'inherit' });
-    console.log('✓ CLI instalado: queda disponible el comando `muse-bridge-mcp`.');
+    execFileSync('npm', ['install', '-g', 'github:MartoneWorkshop/inagate-bridge-connect'], { stdio: 'inherit' });
+    console.log('✓ CLI instalado: queda disponible el comando `inagate-bridge-mcp`.');
   } catch {
     console.error('aviso: la instalación global falló (¿permisos?). Podés reintentar con:');
-    console.error('  npm install -g github:MartoneWorkshop/muse-bridge-connect');
+    console.error('  npm install -g github:MartoneWorkshop/inagate-bridge-connect');
     console.error('Sigo con la configuración: la config es la misma y el CLI la lee igual.');
   }
   await runSetup(argv);
