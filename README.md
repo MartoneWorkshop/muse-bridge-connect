@@ -377,6 +377,14 @@ La configuración del autodispatcher (pesos de señales, frases personalizadas y
 - API: `GET/POST /api/companies/:cid/members`, `PATCH/POST /api/companies/:cid/members/:human_id[/suspend|/reactivate|/revoke]`, `GET /api/company-invitations`, `POST /api/company-invitations/:cid/accept|reject` (migración 039, tabla `company_members`).
 - **Pendiente (en diseño, no disponible):** roles colaborador/socio y sus escrituras, agentes de miembros, aprobaciones por miembros, atribución de cuota entre dueños y transferencia de propiedad.
 
+## Visibilidad de skills de la tienda (en producción)
+
+Quien crea una skill y la asigna a su empresa es su **dueño**, y puede elegir si es pública o privada **sin republicarla**:
+
+- **Cambiar la visibilidad de un skill ya publicado** (autenticado): `PATCH /api/store/skills/:slug/visibility` con `{ "visibility": "public" | "scoped", "version"?: "X.Y.Z", "scopes"?: ["<project_id>", ...] }`. Sin `version`, el cambio aplica a **todas** las versiones publicadas del slug. Pasar a `public` elimina los alcances (scope rows) de esas versiones; pasar a `scoped` sin `scopes` explícitos acota la skill al único proyecto-empresa del dueño (el proyecto común `lobby` nunca cuenta como empresa; si el dueño pertenece a más de una, debe pasar `scopes`).
+- **Autorización: solo el dueño** (la cuenta que la publicó) **o un admin de plataforma**. Otro usuario recibe `403` (`not_skill_owner`), un guest `403` (`guest_forbidden`) y sin autenticar `401`. Acotar a un proyecto del que no sos miembro activo devuelve `403` (`project_membership_required`); un proyecto inexistente, `400` (`project_not_found`); una skill sin versiones publicadas, `409` (`not_published`).
+- Todo cambio queda registrado en la auditoría del puente (`store.visibility`, con versiones afectadas, estado anterior y nuevo alcance).
+
 ## Oficina 2D y biblioteca pública de sprites (en preview)
 
 La vista **«Oficina»** de INAGATE: una oficina virtual 2D donde el humano ve a los empleados de sus empresas trabajando en vivo (salas por departamento, sprites animados con caminata, estados reales: trabajando / esperando aprobación / en cola / libre). Está disponible **en preview** (`bridge.martoneworkshop.com/preview`, sección «Oficina») y **todavía no en producción**: el pase espera la aprobación visual del dueño del despliegue.
