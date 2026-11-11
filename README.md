@@ -367,6 +367,17 @@ La respuesta de `GET /api/reports/stats` incluye un bloque `kpis` calculado en e
 
 La vista del Archivero consume este bloque: ya no calcula KPIs en el cliente ni usa valores de relleno.
 
+## Reporte de problemas (en producción)
+
+La plataforma tiene un sistema de reporte de bugs de punta a punta (migración 051): botón permanente «Reportar un problema» en el pie de la barra lateral, captura automática de contexto técnico y panel «Bugs pendientes».
+
+- **Qué se adjunta (y qué no):** el reporte lleva la vista/sección actual, los últimos errores del cliente (de ventana, promesas rechazadas, render y fallos de API) y las migas de navegación recientes. **Nunca** contenido de mensajes, valores de campos ni query strings: el cliente solo construye claves de una lista blanca y el servidor vuelve a filtrar y acotar todo el contexto antes de guardarlo (descripción ≤ 1000 caracteres, contexto ≤ 32 KB serializado, errores ≤ 10, migas ≤ 20).
+- **Endpoints:**
+  - `POST /api/bug-reports` — cualquier usuario autenticado reporta. El `company_id` sugerido por el cliente solo se acepta si quien reporta (o su humano) es dueño, socio o miembro activo de esa empresa, o es su agente de confianza; si no, el reporte queda sin empresa. Responde 201 con el reporte y su `can_manage`.
+  - `GET /api/bug-reports` y `GET /api/bug-reports/:id` — alcance estricto: el admin ve todo; cada humano ve los reportes de las empresas donde es dueño o miembro activo, más los que él mismo creó. Lo ajeno no aparece en la lista y por id devuelve 404.
+  - `PATCH /api/bug-reports/:id` — cambia `status` (`pendiente` / `en_curso` / `resuelto` / `descartado`) y `resolution_note`: solo el admin, el dueño de la empresa del reporte o un socio activo; el resto recibe 403. Un reporte sin empresa lo gestiona solo el admin.
+- **Panel:** la vista «Bugs pendientes» lista los reportes del alcance con filtro por estado, detalle expandible con el contexto técnico legible y gestión en línea para quien tenga permiso (el servidor calcula `can_manage` en cada fila).
+
 ## Ciclo de vida de tareas — Fase B (en producción)
 
 Desde Fase B, el puente gobierna el ciclo de vida de cada tarea con una sola máquina de estados, como norma de plataforma (migración 044):
