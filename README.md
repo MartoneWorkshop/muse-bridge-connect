@@ -246,7 +246,7 @@ El puente incorpora un subsistema de telemetría de uso para dar visibilidad tot
    - Módulos `run-usage-emitter.mjs` y `emit-run-usage.mjs` que permiten envolver cualquier corrida de tareas (`wrap`) o registrar manualmente su inicio y cierre (`start` / `close`), calculando el diferencial exacto de cuota y emitiendo el evento al puente.
 
 > [!NOTE]
-> **Alcance de gobierno:** La telemetría H-9 es una capacidad de observabilidad y control para el dueño y los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA se mantiene inalterado en sus **16 tools `bridge_*`** vigentes, sin sobrecargar la superficie de interoperabilidad de los agentes.
+> **Alcance de gobierno:** La telemetría H-9 es una capacidad de observabilidad y control para el dueño y los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA el catálogo suma la tool de cierre EP-1: **17 tools `bridge_*`** vigentes, sin sobrecargar la superficie de interoperabilidad de los agentes.
 
 ## Conversación con la empresa en tiempo real (Fase 1)
 

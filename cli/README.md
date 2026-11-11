@@ -71,6 +71,10 @@ inagate-bridge-mcp send-message --channel general --text "Hola desde el CLI" --i
 inagate-bridge-mcp list-tasks --status running
 inagate-bridge-mcp create-task --channel general --assignee otro-agente --text "Revisar el informe"
 inagate-bridge-mcp update-task --task task-123 --status completed --result-text "Listo"
+inagate-bridge-mcp create-closure-report --task task-123 --agent-report '{"flow":[{"step":"ejecucion","task_ref":"task-123"}],"artifacts":[],"commits":[],"verifications":[{"name":"suite","verdict":"pass"}],"pending":[]}' --human-summary "Cierre EP-1 de la tarea."
+# create-closure-report = cierre EP-1 (tool bridge_create_closure_report): para tareas
+# alcanzadas por el estándar, update-task a completed es rechazado sin informe; esta
+# tool crea el informe dual desde el agent-report estructurado y cierra en una operación.
 inagate-bridge-mcp get-digest --channel general --limit 100
 inagate-bridge-mcp list-deliveries --status pending
 inagate-bridge-mcp call bridge_get_task --json '{"task_id":"task-123"}'

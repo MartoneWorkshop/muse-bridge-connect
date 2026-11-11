@@ -22,6 +22,7 @@ import {
 
 const NUMERIC = new Set(['since_id', 'limit', 'output_message_id', 'from_message_id', 'to_message_id', 'since']);
 const BOOLEAN = new Set(['include_offline', 'include_archived']);
+const JSONFIELDS = new Set(['agent_report']);
 
 // flag CLI → campo del esquema de la tool
 const COMMANDS = {
@@ -33,6 +34,7 @@ const COMMANDS = {
   'get-task':      { tool: 'bridge_get_task',      flags: { 'task': 'task_id', 'task-id': 'task_id' } },
   'create-task':   { tool: 'bridge_create_task',   flags: { 'channel': 'channel_id', 'assignee': 'assignee', 'text': 'text', 'task-id': 'task_id', 'idempotency-key': 'idempotency_key' } },
   'update-task':   { tool: 'bridge_update_task',   flags: { 'task': 'task_id', 'task-id': 'task_id', 'status': 'status', 'output-message-id': 'output_message_id', 'result-text': 'result_text' } },
+  'create-closure-report': { tool: 'bridge_create_closure_report', flags: { 'task': 'task_id', 'task-id': 'task_id', 'agent-report': 'agent_report', 'human-summary': 'human_summary', 'output-message-id': 'output_message_id', 'employee-id': 'employee_id', 'company-id': 'company_id' } },
   'get-digest':    { tool: 'bridge_get_digest',    flags: { 'channel': 'channel_id', 'from-id': 'from_message_id', 'to-id': 'to_message_id', 'since': 'since', 'limit': 'limit' } },
   'list-deliveries': { tool: 'bridge_list_deliveries', flags: { 'status': 'status', 'limit': 'limit' } },
 };
@@ -58,6 +60,11 @@ Subcomandos (uno por tool del servidor):
   create-task   --channel ID --assignee A --text "..." [--task-id ID] [--idempotency-key K]
   update-task   --task ID --status running|completed|failed|cancelled
                 [--output-message-id N] [--result-text "..."]
+  create-closure-report --task ID --agent-report '<json>' [--human-summary "..."]
+                [--output-message-id N] [--employee-id ID] [--company-id ID]
+                Cierre EP-1: crea el informe de cierre de la tarea y la completa
+                cumpliendo el estándar (agent-report = informe de agente
+                estructurado, fuente única del informe humano).
   get-digest    --channel ID [--from-id N] [--to-id N] [--since TS] [--limit N]
   list-deliveries [--status pending|installed|dismissed] [--limit N]
   call <tool> --json '{...}'                   Llamada genérica a cualquier tool
@@ -92,6 +99,10 @@ function parseFlags(argv, spec) {
     if (value === undefined) {
       value = argv[++i];
       if (value === undefined) fail(1, `la flag --${key} necesita un valor`);
+    }
+    if (JSONFIELDS.has(field)) {
+      try { args[field] = JSON.parse(value); } catch { fail(1, `la flag --${key} espera JSON válido`); }
+      continue;
     }
     args[field] = NUMERIC.has(field) ? Number(value) : value;
     if (NUMERIC.has(field) && Number.isNaN(args[field])) fail(1, `la flag --${key} espera un número`);
