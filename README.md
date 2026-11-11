@@ -285,6 +285,17 @@ Componente opcional del kit: **`muse-bridge-executor`** (carpeta `executor/`). H
 
 Cada tarea se clasifica con una prioridad **P1–P5** y un motivo auditable; el despacho sigue esa prioridad efectiva (con envejecimiento anti-postergación), no el orden de llegada. La clasificación común corre por reglas deterministas sin costo de modelo, admite pesos y frases por empresa, y el override humano queda registrado y manda.
 
+## Estándar de entrega EP-1 (en producción)
+
+Desde EP-1 v1.0, el puente impone a toda empresa el mismo estándar de entrega y comunicación, como norma de plataforma (no como costumbre de cada empleado):
+
+- **Comunicación comprimida:** los acuses y coordinaciones en el chat son breves (estado, id de tarea, qué se hizo, qué falta). La prosa larga vive en archivos e informes, citados por ruta.
+- **Entrega = informe de cierre:** ninguna tarea alcanzada por el estándar cierra sin su **informe de agente** enlazado: un cuerpo estructurado (`flow`, `artifacts`, `commits`, `verifications`, `pending` — solo referencias) más un resumen humano breve (máx. 500 caracteres).
+- **Informe dual de fuente única:** el informe humano se genera por plantilla **solo** desde el informe de agente y ese resumen; no puede declarar nada que el estructurado no contenga. Ambos se leen en el Archivero y en el legajo del empleado.
+- **Cierre duro, validado por el servidor:** sin informe válido la transición a `completed` se rechaza y la tarea queda abierta (también para la aprobación humana por chat: aprobar es un paso más del flujo, no una exención). Cada cierre deja un asiento auditable en el registro (`task.closure_ep1`) que enlaza tarea, empleado, empresa e informe.
+- **Estampa de plataforma:** todo empleado nuevo nace con `platform_standard_version = 'ep1-v1'` (migración 046); el bloque de instrucción del estándar se inyecta en tiempo de ejecución, por encima del prompt de cargo y de las skills — no se guarda en el empleado, así que actualizar el estándar alcanza a todos en su próximo turno.
+- **Candados de seguridad absorbidos en la misma entrega:** el resultado de una tarea por la API solo lo reporta su asignado (o el solicitante o un admin) y desde el canal de la tarea; la aprobación por chat verifica el vínculo tarea↔conversación/empresa antes de cualquier efecto, y los informes automáticos se archivan bajo la empresa real de la tarea, nunca bajo una empresa fija.
+
 ## Empresas compartidas (Fase 1 — en producción)
 
 - Una empresa puede **compartirse con otro humano** con rol **`invitado` (solo lectura)**: el dueño invita desde el panel de miembros de su empresa; el invitado acepta o rechaza; el dueño puede suspender, reactivar o revocar, con corte de acceso inmediato y cada transición registrada en auditoría.
@@ -325,6 +336,7 @@ La vista **«Oficina»** de INAGATE: una oficina virtual 2D donde el humano ve a
   se activa con código de un solo uso y jamás pasa por el agente.
 - **Decisiones reservadas**: publicar, mergear, gastar o cambiar permisos
   siempre lo decide un humano.
+- **Cierre de tareas auditable (EP-1):** una tarea alcanzada por el estándar no cierra sin informe de agente enlazado y asiento en el registro de auditoría; el informe humano visible deriva solo de ese informe estructurado.
 - **Telemetría y cuotas honestas**: contabilidad inmutable de cuota y eventos
   por corrida sin números inventados, con distinción explícita de confiabilidad
   y exportación directa en CSV y JSON.
