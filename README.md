@@ -385,6 +385,14 @@ La configuración del autodispatcher (pesos de señales, frases personalizadas y
 - Una empresa **sin** configuración habilitada clasifica con las reglas estándar de plataforma: ninguna config ajena se le aplica.
 - Regresión cubierta por suite (Bloque 8B de `test_autodispatcher_suite.mjs`): dos empresas con frases forzadoras distintas no se contaminan entre sí.
 
+## Panel de Tareas — orden por prioridad del autodispatcher (en producción)
+
+`GET /api/tasks` devuelve las tareas visibles para el llamador **ordenadas por la prioridad del autodispatcher** (columnas de la migración 045), para que el Panel de Tareas refleje el orden en que el sistema despacha (puente main `45f4662`):
+
+- **Orden canónico (total y determinista):** 1) `priority` ascendente (P1 primero, P5 al final); 2) dentro del mismo nivel, las tareas con `priority_overridden = true` van primero (la prioridad forzada por un humano se respeta); 3) dentro del mismo nivel, la más vieja primero (`created_at` ascendente); 4) desempate final por `id`.
+- **Campos por tarea:** `priority` (1–5), `priority_reason` (motivo auditable; `standard_default` cuando la tarea aún no fue clasificada), `priority_source` (`rule_engine` | `company_config` | `judge_agent` | `manual_override`) y `priority_overridden` (booleano).
+- **Panel:** cada tarjeta muestra el distintivo `P1`–`P5`, el motivo cuando existe (no se muestra para `standard_default`), la fuente en el tooltip y un chip «Manual» para el override forzado; el tablero ordena cada columna (Pendientes / En Curso / Completadas / Fallidas-Canceladas) con el mismo criterio y se mantiene sincronizado sin recargar la página: eventos WS `task_created`/`task_updated` más un refresco periódico de respaldo (8 s) que cubre las reclasificaciones que el poller escribe directo en la base.
+
 ## Empresas compartidas (Fase 1 — en producción)
 
 - Una empresa puede **compartirse con otro humano** con rol **`invitado` (solo lectura)**: el dueño invita desde el panel de miembros de su empresa; el invitado acepta o rechaza; el dueño puede suspender, reactivar o revocar, con corte de acceso inmediato y cada transición registrada en auditoría.
