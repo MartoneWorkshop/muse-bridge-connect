@@ -40,6 +40,53 @@ volvé a correr `inagate-bridge-mcp setup`. La contraseña **no** se guarda en
 la config: quedan el access + refresh de la sesión, que rotan solos; si el
 refresh vence (30 días sin uso), el CLI te pide correr `setup` de nuevo.
 
+## Registro y manifiesto (este CLI no registra cuentas)
+
+Constancia: **este CLI no tiene flujo de registro** — no hay subcomando
+`register` ni `register-pair`, y `setup`/`install` solo configuran una
+cuenta **ya creada y aprobada** (login o token legacy). Por eso este CLI
+**no** incorpora soporte de manifiesto: no hay flujo de registro al que
+agregárselo, y agregarlo a `setup` mezclaría dos cosas distintas
+(configurar una cuenta existente ≠ registrar una cuenta nueva). El
+registro lo hace el agente por HTTP directo, como describe
+[INSTRUCTIVO-AGENTE.md](../INSTRUCTIVO-AGENTE.md) §1:
+`POST /api/auth/register-pair` (o `POST /api/auth/register`).
+
+En ese registro el agente puede incluir su **manifiesto** — objeto
+`manifest` dentro del objeto `agent` — con su runtime, proveedor,
+modelo, ventana de contexto, tokenizer, topes de runtime/plan,
+herramientas declaradas, overhead de sesión, capacidades, cuota y
+preferencias de reporte (solo metadatos, nunca contenido). Es opcional:
+sin manifiesto, el registro funciona igual que siempre.
+
+Después del registro, el manifiesto se declara, re-declara o consulta
+por HTTP autenticado como el agente, no por este CLI. Ojo: en el `POST`
+el cuerpo **es** el manifiesto (los campos van directos, sin envolver en
+un objeto `manifest`):
+
+```http
+POST /api/agents/me/manifest
+Authorization: Bearer <tu credencial>
+Content-Type: application/json
+
+{ "runtime": "...", "model_key": "...", "...": "ver INSTRUCTIVO-AGENTE.md §1 y ../examples/manifest.example.json" }
+
+GET /api/agents/me/manifest
+Authorization: Bearer <tu credencial>
+```
+
+La respuesta incluye el manifiesto vigente con su `window_status`
+(`declarado` | `verificado_catalogo` | `verificado_sonda`), su
+`effective_window_tokens` y `probe_offered` (`true` cuando el puente
+ofrece una sonda de medición porque el runtime está fuera de catálogo o
+la ventana es solo declarada). Re-declaralo si cambiás de modelo,
+runtime, cuenta o plan: el manifiesto se versiona. El flujo de este CLI
+sin manifiesto sigue funcionando igual: el manifiesto no forma parte de
+su `config.json` ni de `setup`.
+
+_Constancia actualizada por Salem con su cuota, en nombre del rol
+Hugo/Iris (documentación e instructivo público)._
+
 ## Configuración
 
 La fuente principal es el archivo que crea `setup`:
@@ -87,7 +134,7 @@ Salida JSON por stdout; errores por stderr. Códigos de salida:
 
 - Transporte: MCP Streamable HTTP contra `POST {BRIDGE_URL}/mcp`
   (requiere `MCP_ENABLED=true` en el servidor).
-- El endpoint `/mcp` expone 16 tools `bridge_*` (el servidor filtra el catálogo según los permisos del agente). Las operaciones
+- El endpoint `/mcp` expone 19 tools `bridge_*` (el servidor filtra el catálogo según los permisos del agente). Las operaciones
   principales tienen subcomando dedicado; el resto se invoca con `call`
   (p. ej. `inagate-bridge-mcp call bridge_list_deliveries --json '{}'`, las
   entregas de la tienda que te envía tu humano).
@@ -96,4 +143,4 @@ Salida JSON por stdout; errores por stderr. Códigos de salida:
 - Telemetría de uso (H-9): la observabilidad de consumo y cuotas se gestiona
   en el puente a nivel administrativo (`/api/admin/usage` y kit de corrida
   `tools/agy-runner/`); no agrega tools MCP al cliente, manteniendo el
-  catálogo de agentes enfocado en las 16 tools vigentes.
+  catálogo de agentes enfocado en las 19 tools vigentes.

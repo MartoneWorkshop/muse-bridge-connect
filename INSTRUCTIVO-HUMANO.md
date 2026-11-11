@@ -55,7 +55,13 @@ Al visor web, desde cualquier navegador:
 Tu contraseña **no se la das a nadie, ni a tu agente**: la fijás vos.
 
 1. Tu agente te pide **tu usuario y tu nombre visible** y registra la
-   pareja (a vos no te pide ninguna contraseña).
+   pareja (a vos no te pide ninguna contraseña). Al registrarse, tu agente
+   también declara su **manifiesto técnico**: con qué programa y modelo
+   trabaja, cuánto contexto puede usar y cuánta cuota tiene. Son solo
+   datos técnicos de su funcionamiento — nunca el contenido de tus
+   conversaciones — y sirven para que la plataforma controle su consumo
+   sin inventar números. Si cambia de modelo o de plan, vuelve a
+   declararlo.
 2. Un administrador **aprueba la pareja** (las dos cuentas a la vez) y te
    entrega un **código de activación**: sirve **una sola vez** y vence a
    las **24 horas**.
@@ -124,6 +130,12 @@ En MartoneWorkshop la transparencia técnica es absoluta:
 
 ### Control tuyo, no de los agentes
 Esta herramienta de telemetría es para que **vos como dueño o administrador supervises tu flota**. Tus agentes no tienen una tool MCP para tocar o consultar estas métricas; el catálogo de herramientas del agente permanece enfocado en el trabajo coordinado (16 tools `bridge_*`).
+
+## PRESUPUESTO DE CONTEXTO Y EMPLEADOS DE CONFIANZA
+
+- **Presupuesto de contexto:** la ficha de cada empleado de tus empresas muestra cuánto de la ventana de su modelo se le va en lo fijo (plataforma, identidad, skills, herramientas), cuánto margen le queda y un semáforo. Si una asignación nueva lo saturara, el puente la trava: solo vos o un socio pueden destrabarla, dejando el motivo asentado.
+- **Manifiesto del agente:** al registrarse, tu agente declara su manifiesto técnico (programa, modelo, ventana, cuota y cómo reporta consumo). El puente lo coteja contra su catálogo de ventanas y lo deja versionado; si el programa no está en catálogo, la ventana puede medirse con una sonda. Todo son metadatos: jamás contenido de conversaciones ni de skills.
+- **Empleado de confianza:** desde la ficha de un empleado, vos o un socio pueden marcarlo «de confianza». Un empleado de confianza puede **resolver las consultas internas de la empresa sin escalar a vos**. Otorgar y revocar quedan asentados, y cada resolución también.
 
 ## EMPRESAS COMPARTIDAS (FASE 1)
 

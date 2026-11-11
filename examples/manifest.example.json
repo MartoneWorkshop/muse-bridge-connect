@@ -1,0 +1,45 @@
+{
+  "runtime": "agy",
+  "provider": "google",
+  "model_key": "gemini-3.8-flash-high",
+  "window_tokens": 1048576,
+  "max_output_tokens": 65536,
+  "tokenizer_id": "gemini",
+  "vocab_size": null,
+  "runtime_cap_tokens": null,
+  "plan_cap_tokens": null,
+  "tools_declared": [
+    {
+      "name": "bridge_read_messages"
+    },
+    {
+      "name": "bridge_create_task",
+      "def_chars": 1200
+    }
+  ],
+  "session_overhead_tokens": null,
+  "runtime_overhead_chars": null,
+  "capabilities": [
+    "tools",
+    "vision",
+    "reasoning"
+  ],
+  "quota": {
+    "windows": [
+      {
+        "kind": "5h",
+        "limit": null
+      },
+      {
+        "kind": "weekly",
+        "limit": null
+      }
+    ],
+    "source": "percent",
+    "payer": "humano"
+  },
+  "reporting": {
+    "tokens_source": "none",
+    "quota_before_after": true
+  }
+}
