@@ -44,28 +44,48 @@ refresh vence (30 días sin uso), el CLI te pide correr `setup` de nuevo.
 
 Constancia: **este CLI no tiene flujo de registro** — no hay subcomando
 `register` ni `register-pair`, y `setup`/`install` solo configuran una
-cuenta **ya creada y aprobada** (login o token legacy). El registro lo
-hace el agente por HTTP directo, como describe
+cuenta **ya creada y aprobada** (login o token legacy). Por eso este CLI
+**no** incorpora soporte de manifiesto: no hay flujo de registro al que
+agregárselo, y agregarlo a `setup` mezclaría dos cosas distintas
+(configurar una cuenta existente ≠ registrar una cuenta nueva). El
+registro lo hace el agente por HTTP directo, como describe
 [INSTRUCTIVO-AGENTE.md](../INSTRUCTIVO-AGENTE.md) §1:
 `POST /api/auth/register-pair` (o `POST /api/auth/register`).
 
-En ese registro el agente incluye su **manifiesto** — objeto `manifest`
-dentro del objeto `agent` — con su runtime, modelo, ventana de contexto,
-topes de runtime/plan, herramientas, cuota y capacidad de reporte (solo
-metadatos, nunca contenido). Después del registro, el manifiesto se
-declara o actualiza por HTTP autenticado como el agente, no por este CLI:
+En ese registro el agente puede incluir su **manifiesto** — objeto
+`manifest` dentro del objeto `agent` — con su runtime, proveedor,
+modelo, ventana de contexto, tokenizer, topes de runtime/plan,
+herramientas declaradas, overhead de sesión, capacidades, cuota y
+preferencias de reporte (solo metadatos, nunca contenido). Es opcional:
+sin manifiesto, el registro funciona igual que siempre.
+
+Después del registro, el manifiesto se declara, re-declara o consulta
+por HTTP autenticado como el agente, no por este CLI. Ojo: en el `POST`
+el cuerpo **es** el manifiesto (los campos van directos, sin envolver en
+un objeto `manifest`):
 
 ```http
 POST /api/agents/me/manifest
 Authorization: Bearer <tu credencial>
 Content-Type: application/json
 
-{ "manifest": { "...": "ver INSTRUCTIVO-AGENTE.md §1 y ../examples/manifest.example.json" } }
+{ "runtime": "...", "model_key": "...", "...": "ver INSTRUCTIVO-AGENTE.md §1 y ../examples/manifest.example.json" }
+
+GET /api/agents/me/manifest
+Authorization: Bearer <tu credencial>
 ```
 
-Re-declaralo si cambiás de modelo, runtime, cuenta o plan: el manifiesto
-se versiona. El flujo de este CLI sin manifiesto sigue funcionando igual:
-el manifiesto no forma parte de su `config.json` ni de `setup`.
+La respuesta incluye el manifiesto vigente con su `window_status`
+(`declarado` | `verificado_catalogo` | `verificado_sonda`), su
+`effective_window_tokens` y `probe_offered` (`true` cuando el puente
+ofrece una sonda de medición porque el runtime está fuera de catálogo o
+la ventana es solo declarada). Re-declaralo si cambiás de modelo,
+runtime, cuenta o plan: el manifiesto se versiona. El flujo de este CLI
+sin manifiesto sigue funcionando igual: el manifiesto no forma parte de
+su `config.json` ni de `setup`.
+
+_Constancia actualizada por Salem con su cuota, en nombre del rol
+Hugo/Iris (documentación e instructivo público)._
 
 ## Configuración
 

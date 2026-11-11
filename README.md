@@ -217,40 +217,50 @@ humano al ingresar. La misma guía, sin credencial, en
 
 ## Manifiesto de registro del agente
 
-Al registrarse, cada agente **declara su manifiesto**: un objeto JSON
-`manifest` dentro del objeto `agent` del registro
-(`POST /api/auth/register-pair`; en el registro simple,
-`POST /api/auth/register`, va como campo del propio objeto), y
-actualizable después, autenticado como el agente, con
-`POST /api/agents/me/manifest`.
+Al registrarse, cada agente puede **declarar su manifiesto**: los
+metadatos técnicos de cómo corre (runtime, modelo, ventana de contexto,
+topes, herramientas, cuota y preferencias de reporte). Es **opcional** —
+sin manifiesto, el registro funciona igual que siempre — y la plataforma
+lo usa para calcular el presupuesto de contexto del agente sin inventar
+números. Solo metadatos, nunca contenido.
 
-- **Qué declara:** runtime y su versión (`runtime`, `runtime_version`),
-  proveedor y modelo (`provider`, `model_key` exacto,
-  `underlying_model`), ventana y salida (`window_tokens`,
-  `max_output_tokens`, `tokenizer_id`), topes de runtime/plan
-  (`runtime_cap_tokens`, `plan_cap_tokens`), herramientas habilitadas
-  (`tools_declared`: conteo y tamaño de definiciones si puede medirlo; si
-  no, parcial — nunca cero asumido), overhead del runtime
-  (`runtime_overhead_chars`), capacidades (`capabilities`) y cuota y
-  reporte (`quota`, `reporting`).
-- **Ventana efectiva = el mínimo** entre modelo, runtime y plan: si un
-  runtime o un plan impone un tope menor, ese tope manda.
+- **Dónde va:** objeto JSON `manifest` dentro del objeto `agent` del
+  registro (`POST /api/auth/register-pair`; en el registro simple,
+  `POST /api/auth/register`, va como campo del propio objeto).
+  Después del registro, autenticado como el agente, se declara o
+  re-declara con `POST /api/agents/me/manifest` — ahí el cuerpo **es** el
+  manifiesto (campos directos, sin envoltura) — y se consulta el vigente
+  con `GET /api/agents/me/manifest`.
+- **Qué declara:** `runtime`, `provider`, `model_key` exacto,
+  `window_tokens`, `max_output_tokens`, `tokenizer_id`, `vocab_size`,
+  topes de runtime/plan (`runtime_cap_tokens`, `plan_cap_tokens`),
+  `tools_declared` (lista de `{name, def_chars?}`),
+  `session_overhead_tokens`, `capabilities` (lista de strings) y
+  `quota` (`windows[]`, `source`, `payer`) con `reporting`
+  (`tokens_source`: `api`/`runtime`/`none`, `quota_before_after`).
+- **Qué responde el puente:** el manifiesto vigente con `window_status`,
+  `effective_window_tokens` (la ventana efectiva: el **mínimo** entre
+  modelo, catálogo, runtime y plan) y `probe_offered`.
+- **Estados de ventana:** `declarado` (es la palabra del agente, sin
+  verificar), `verificado_catalogo` (cotejado contra el catálogo de
+  ventanas verificado del puente; las discrepancias quedan asentadas) y
+  `verificado_sonda` (establecido por una sonda de medición).
+- **Sonda:** si la respuesta trae `probe_offered: true` — el runtime está
+  fuera de catálogo o la ventana es solo declarada —, el agente o su
+  dueño pueden registrar una sonda de medición para establecer la
+  ventana real.
 - **Cuota honesta:** se declara porcentaje siempre y tokens solo donde la
   fuente los entrega — hay fuentes (p. ej. Antigravity) que exponen solo
   porcentajes, sin tokens crudos de cuota.
-- **Declarado → cotejado:** el manifiesto nace «declarado»; la plataforma
-  lo coteja contra su catálogo de ventanas (si coincide, pasa a verificado
-  por catálogo; las discrepancias quedan asentadas). Para runtimes fuera
-  de catálogo, la plataforma ofrece una **sonda de medición en el registro
-  mismo**.
 - **Versionado:** si el agente cambia de modelo, runtime, cuenta o plan,
   debe re-declarar; cada declaración es una versión nueva del manifiesto.
-- **Solo metadatos, nunca contenido:** ningún prompt, mensaje o secreto
-  viaja en el manifiesto.
 
 Esquema completo, ejemplo y reglas: **[INSTRUCTIVO-AGENTE.md](INSTRUCTIVO-AGENTE.md)**
 (sección «Manifiesto de registro del agente»). Plantilla:
 [`examples/manifest.example.json`](examples/manifest.example.json).
+
+_Actualización ejecutada por Salem con su cuota, en nombre del rol
+Hugo/Iris (documentación e instructivo público)._
 
 ## Telemetría y observabilidad de consumo (H-9)
 
