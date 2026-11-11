@@ -296,6 +296,15 @@ Desde EP-1 v1.0, el puente impone a toda empresa el mismo estándar de entrega y
 - **Estampa de plataforma:** todo empleado nuevo nace con `platform_standard_version = 'ep1-v1'` (migración 046); el bloque de instrucción del estándar se inyecta en tiempo de ejecución, por encima del prompt de cargo y de las skills — no se guarda en el empleado, así que actualizar el estándar alcanza a todos en su próximo turno.
 - **Candados de seguridad absorbidos en la misma entrega:** el resultado de una tarea por la API solo lo reporta su asignado (o el solicitante o un admin) y desde el canal de la tarea; la aprobación por chat verifica el vínculo tarea↔conversación/empresa antes de cualquier efecto, y los informes automáticos se archivan bajo la empresa real de la tarea, nunca bajo una empresa fija.
 
+## Exportación del Archivero (en producción)
+
+El dueño (o un socio activo) de una empresa se lleva toda su documentación de auditoría en un ZIP organizado (paquete , migración 047), desde el Archivero o desde Mi Empresa → Documentos:
+
+- **Contenido:** dictámenes, informes y entregas por departamento y empleado, los informes duales EP-1 en sus dos formatos (estructurado y humano, juntos), el registro de auditoría de la empresa y un índice de tareas con **solo metadatos**. Cada documento tiene su entrada en el manifiesto con su hash, y  se verifica con herramientas estándar ().
+- **Gobernanza (D8):** exportar es un acto de propiedad — solo el dueño o un socio activo, en persona. Colaboradores, invitados, miembros suspendidos y el agente de confianza reciben 403 con asiento de seguridad; sin relación con la empresa, 404 uniforme. Cada solicitud, generación y descarga deja su asiento en el registro; si el asiento falla, no se entrega el paquete.
+- **Enlace temporal y no-retención:** el enlace vive 24 horas (token de un solo uso visible una sola vez, en base solo su hash); regenerar invalida la exportación anterior y borra su ZIP. La plataforma no guarda copia del paquete: si el dueño lo pierde, genera otro.
+- **Lo que NO viaja en v1:** conversaciones ni tareas en crudo — solo el índice de metadatos. La fase 2 (crudos) queda condicionada a verificar el mapeo conversación→empresa y a la decisión del dueño sobre mensajes humano↔humano.
+
 ## Empresas compartidas (Fase 1 — en producción)
 
 - Una empresa puede **compartirse con otro humano** con rol **`invitado` (solo lectura)**: el dueño invita desde el panel de miembros de su empresa; el invitado acepta o rechaza; el dueño puede suspender, reactivar o revocar, con corte de acceso inmediato y cada transición registrada en auditoría.
@@ -337,6 +346,7 @@ La vista **«Oficina»** de INAGATE: una oficina virtual 2D donde el humano ve a
 - **Decisiones reservadas**: publicar, mergear, gastar o cambiar permisos
   siempre lo decide un humano.
 - **Cierre de tareas auditable (EP-1):** una tarea alcanzada por el estándar no cierra sin informe de agente enlazado y asiento en el registro de auditoría; el informe humano visible deriva solo de ese informe estructurado.
+- **Exportación del archivero gobernada:** solo el dueño o un socio activo se lleva la documentación de su empresa, con enlace de 24 horas y asiento en auditoría; la plataforma no retiene copia del paquete.
 - **Descargas seguras (A-01):** ningún archivo subido por usuarios se sirve ejecutable desde el origen del puente: los tipos activos (HTML, SVG, scripts) se fuerzan a descarga como `application/octet-stream`, solo las imágenes raster y los PDF se muestran inline, y toda descarga lleva CSP `sandbox` y `nosniff` — también para los archivos ya almacenados.
 - **Telemetría y cuotas honestas**: contabilidad inmutable de cuota y eventos
   por corrida sin números inventados, con distinción explícita de confiabilidad
