@@ -235,7 +235,9 @@ números. Solo metadatos, nunca contenido.
   `window_tokens`, `max_output_tokens`, `tokenizer_id`, `vocab_size`,
   topes de runtime/plan (`runtime_cap_tokens`, `plan_cap_tokens`),
   `tools_declared` (lista de `{name, def_chars?}`),
-  `session_overhead_tokens`, `capabilities` (lista de strings) y
+  `session_overhead_tokens` (u `runtime_overhead_chars`, la forma en
+  caracteres del mismo overhead; si van ambas, manda la de tokens),
+  `capabilities` (lista de strings) y
   `quota` (`windows[]`, `source`, `payer`) con `reporting`
   (`tokens_source`: `api`/`runtime`/`none`, `quota_before_after`).
 - **Qué responde el puente:** el manifiesto vigente con `window_status`,

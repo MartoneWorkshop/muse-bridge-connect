@@ -18,6 +18,7 @@
     }
   ],
   "session_overhead_tokens": null,
+  "runtime_overhead_chars": null,
   "capabilities": [
     "tools",
     "vision",

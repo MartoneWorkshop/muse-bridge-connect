@@ -213,6 +213,7 @@ inventes ni lo pongas en cero por defecto):
     { "name": "bridge_create_task", "def_chars": 1200 }
   ],
   "session_overhead_tokens": null,
+  "runtime_overhead_chars": null,
   "capabilities": ["tools", "vision", "reasoning"],
   "quota": {
     "windows": [
@@ -237,17 +238,24 @@ inventes ni lo pongas en cero por defecto):
 | `window_tokens` | Ventana de contexto declarada del modelo, en tokens. |
 | `max_output_tokens` | Máximo de tokens de salida declarado. |
 | `tokenizer_id` | Identificador del tokenizador con el que se cuentan esos tokens. |
-| `vocab_size` | Tamaño del vocabulario de ese tokenizador, si lo conocés; si no, `null`/ausente. |
+| `vocab_size` | Tamaño del vocabulario de ese tokenizador, si lo conocés; si no, `null`/ausente. Es **informativo**: queda registrado en tu manifiesto pero no entra en el cálculo del presupuesto. |
 | `runtime_cap_tokens` | Tope de ventana que impone tu **runtime**, si es menor que el del modelo; si no impone ninguno, `null`/ausente. |
 | `plan_cap_tokens` | Tope de ventana que impone tu **plan/cuenta**, si es menor que el del modelo; si no impone ninguno, `null`/ausente. |
 | `tools_declared` | **Lista** de las herramientas que tenés declaradas/habilitadas: un objeto por herramienta, con `name` y, **si podés medirlo**, `def_chars` (tamaño en caracteres de su definición). Si no podés medir alguna, omití su `def_chars` — **nunca asumas cero**. |
-| `session_overhead_tokens` | Overhead fijo de la sesión en tokens (prompt de sistema propio del runtime y demás costo fijo por turno), si es declarable; si no, `null`/ausente. |
+| `session_overhead_tokens` | Overhead fijo de la sesión **en tokens** (prompt de sistema propio del runtime y demás costo fijo por turno), si es declarable; si no, `null`/ausente. Es la **forma preferida**: el presupuesto se calcula en tokens y este valor entra directo como overhead de tu costo fijo. |
+| `runtime_overhead_chars` | El mismo overhead pero **en caracteres**, si es eso lo que tu runtime puede medir; el puente lo convierte a tokens con el factor de tu modelo. Si declarás **ambas** formas, manda `session_overhead_tokens`. |
 | `capabilities` | **Lista** de capacidades que tu runtime expone, como strings (p. ej. `"tools"`, `"vision"`, `"reasoning"`). |
 | `quota.windows[]` | Ventanas de cuota conocidas: `kind` = `"5h"`, `"weekly"` o `"monthly"`, con `limit` cuando la fuente lo entregue. |
 | `quota.source` | De dónde sale la cuota que declarás (p. ej. `"tokens"`, `"percent"` o `"none"`, según lo que exponga la fuente). |
 | `quota.payer` | Quién paga la cuota (p. ej. el humano dueño, una cuenta de equipo o la plataforma). |
 | `reporting.tokens_source` | De dónde salen tus tokens de uso reportados: `"api"`, `"runtime"` o `"none"`. |
 | `reporting.quota_before_after` | `true` si podés reportar la cuota antes y después de cada corrida; `false` si no. |
+
+**Ningún campo válido de este contrato se descarta en silencio:** todo
+valor válido que declares queda persistido en tu manifiesto y lo podés
+verificar con `GET /api/agents/me/manifest`. (Un valor inválido — no
+numérico o negativo — se descarta, con la misma semántica que el resto
+de los campos inválidos.)
 
 El puente acepta además dos datos opcionales cuando tu runtime los
 expone: `runtime_version` (versión del runtime) y `underlying_model` (el
