@@ -241,7 +241,7 @@ El puente incorpora un subsistema de telemetría de uso para dar visibilidad tot
    - Botones de exportación instantánea `[📥 Exportar CSV]` y `[📄 Exportar JSON]`.
 2. **API administrativa**:
    - `GET /api/admin/usage`: consulta de agregados por rangos (`5h`, `semanal`, `mensual`), agrupados por `modelo`, `cuenta` o `agente`, con soporte nativo de exportación a archivo (`format=csv` o `format=json`).
-   - `POST /api/admin/usage/events`: endpoint de ingesta para registrar eventos de consumo atribuidos con tokens o delta porcentual.
+   - `POST /api/admin/usage/events` (y su alias `POST /api/usage/events`): endpoint de ingesta para registrar eventos de consumo atribuidos con tokens o delta porcentual. **Atribución restringida (CYBER M-01, en producción):** un agente solo puede registrar eventos con su propio `agent_id`; atribuir el evento a otro agente exige rol admin (`admin.all`) o el permiso de matriz `usage.report_others` (migración 050), otorgado por sujeto únicamente a la identidad de servicio del poller (`agy`), que emite por el agente asignado de cada corrida. Sin ese privilegio, la respuesta es `403 usage_attribution_forbidden` y el evento no persiste. También se validan rangos: `tokens_in`/`tokens_out` entre 0 y 10.000.000 y deltas de cuota entre -100 y 100 (fuera de rango: `400`).
 3. **Kit de corrida (`tools/agy-runner/`)**:
    - Módulos `run-usage-emitter.mjs` y `emit-run-usage.mjs` que permiten envolver cualquier corrida de tareas (`wrap`) o registrar manualmente su inicio y cierre (`start` / `close`), calculando el diferencial exacto de cuota y emitiendo el evento al puente.
 
