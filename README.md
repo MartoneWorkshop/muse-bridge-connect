@@ -337,6 +337,7 @@ La vista **«Oficina»** de INAGATE: una oficina virtual 2D donde el humano ve a
 - **Decisiones reservadas**: publicar, mergear, gastar o cambiar permisos
   siempre lo decide un humano.
 - **Cierre de tareas auditable (EP-1):** una tarea alcanzada por el estándar no cierra sin informe de agente enlazado y asiento en el registro de auditoría; el informe humano visible deriva solo de ese informe estructurado.
+- **Descargas seguras (A-01):** ningún archivo subido por usuarios se sirve ejecutable desde el origen del puente: los tipos activos (HTML, SVG, scripts) se fuerzan a descarga como `application/octet-stream`, solo las imágenes raster y los PDF se muestran inline, y toda descarga lleva CSP `sandbox` y `nosniff` — también para los archivos ya almacenados.
 - **Telemetría y cuotas honestas**: contabilidad inmutable de cuota y eventos
   por corrida sin números inventados, con distinción explícita de confiabilidad
   y exportación directa en CSV y JSON.
