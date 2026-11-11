@@ -315,6 +315,14 @@ Desde Fase B, el puente gobierna el ciclo de vida de cada tarea con una sola má
 - **Nacimiento solo por orden con intención:** las tareas nacen únicamente de una orden con intención — de un humano (o del despachante de confianza) por texto o por metadata, o de una creación explícita de tarea. Los avisos del sistema no nacen como tarea, ejecutar un mensaje que no es una orden no acuña una, y referenciar un `task_id` en un mensaje no crea una tarea. Cada orden de ámbito se acuña una sola vez (deduplicación por orden + mensaje).
 - **Cierre único EP-1:** completar exige el informe de cierre EP-1 (ver Estándar de entrega EP-1); `failed`, `cancelled` y `dead_letter` cierran con motivo, sin informe. El cierre de una convocatoria transiciona su estado en la misma transacción que el cierre de su tarea.
 
+## Autodispatcher — configuración por empresa acotada (O2, en producción)
+
+La configuración del autodispatcher (pesos de señales, frases personalizadas y agente juez) es **por empresa** y el poller la aplica acotada a la empresa de cada tarea (main `5703ba0`):
+
+- La empresa de la tarea se resuelve desde `external_ref.company_id` y la config se carga con `WHERE company_id = $1 AND enabled = true` (cache por ciclo de polling).
+- Una empresa **sin** configuración habilitada clasifica con las reglas estándar de plataforma: ninguna config ajena se le aplica.
+- Regresión cubierta por suite (Bloque 8B de `test_autodispatcher_suite.mjs`): dos empresas con frases forzadoras distintas no se contaminan entre sí.
+
 ## Empresas compartidas (Fase 1 — en producción)
 
 - Una empresa puede **compartirse con otro humano** con rol **`invitado` (solo lectura)**: el dueño invita desde el panel de miembros de su empresa; el invitado acepta o rechaza; el dueño puede suspender, reactivar o revocar, con corte de acceso inmediato y cada transición registrada en auditoría.
