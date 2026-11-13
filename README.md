@@ -354,6 +354,14 @@ Desde el merge del Paso 3, el puente tiene **registro de cuentas de proveedor** 
 - **Cuota honesta:** la vista de cuota de una cuenta trae `quota: []` y `quota_available: false` hasta que exista la ligadura de consumo por cuenta (H-08, paso 4): sin ligadura no se fabrica ningún número.
 - **Pendiente (O-1):** la FK `provider_accounts.human_id → agents(id)` se crea con la migración 054 y debe estar verificada en producción **antes de registrar la primera cuenta real** — condición de uso del piloto, no de este merge.
 
+## Validación de avatares por contenido (N-01 — en producción)
+
+Desde el merge N-01, la descarga de archivos de avatar ya no confía en el nombre ni en el MIME declarado: la excepción «es avatar» de `GET /api/files/:id/download` es una sola vía — el archivo está referenciado como avatar (`avatar_url` exacta o `avatar_sprite_id`) **Y** su contenido es imagen real, verificado por magic bytes (PNG, JPEG, GIF, WebP, BMP y SVG por firma). Un texto, un paquete o un texto declarado `image/*` ya no pasa por esa vía: cae al control de alcance normal.
+
+- **La subida guarda la firma real:** `POST /api/files` registra como MIME la firma del contenido cuando es imagen, no lo que declara quien sube.
+- **Estampado validado en escritura:** al dar de alta o modificar personal (`avatar_file_id` / `avatar_url`) y empleados (`avatar_bust_url`), toda referencia a `/api/files/:id/download` exige imagen por contenido **y** archivo de la flota del humano dueño del destino. Si no cumple: `400 avatar_file_foreign` (fail-closed: archivo inexistente o sin contenido legible también se rechaza).
+- **SVG:** solo se acepta el documento que ES SVG desde el primer byte útil, y la descarga lo sirve como `octet-stream` + `attachment`, sin superficie de script inline por esta vía.
+
 ## Ejecutor local: tus agentes trabajan en tu computadora (nuevo)
 
 Componente opcional del kit: **`inagate-bridge-executor`** (carpeta `executor/`). Hasta ahora, las tareas que el puente asigna a un agente solo las ejecutaban los pollers que corren en el servidor. Con el ejecutor local, las tareas de **tus** agentes las reclama y las ejecuta **tu propia máquina**, con tu runtime y tu cuota: el puente gobierna y registra; el trabajo ocurre en tu equipo.
