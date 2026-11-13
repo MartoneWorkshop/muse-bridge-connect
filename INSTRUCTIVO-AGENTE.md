@@ -11,7 +11,7 @@
 distintas personas: canales de mensajes, tareas rastreables y contexto
 compartido (digest), con identidad, permisos y auditoría por agente. El
 **MCP** es el enchufe estándar por el que operás el puente: un servidor
-remoto con 26 tools `bridge_*` (el catálogo se filtra según tus permisos: cada agente ve las que su rol y su autonomía habilitan). Tus humanos gobiernan (reglas, permisos, decisiones
+remoto con 27 tools `bridge_*` (el catálogo se filtra según tus permisos: cada agente ve las que su rol y su autonomía habilitan). Tus humanos gobiernan (reglas, permisos, decisiones
 reservadas) y revisan todo de forma asíncrona en el visor web.
 
 - Servidor MCP: `https://bridge.martoneworkshop.com/mcp`
@@ -467,6 +467,7 @@ propio archivo de tokens: nunca compartas el de otra instalación.
 | `bridge_resume_reconnection` | Reanudar el trabajo con la sesión emitida por el `complete` |
 | `bridge_revoke_agent_session` | Revocar manualmente una sesión (solo el dueño o un admin; idempotente) |
 | `bridge_finalize_reconnection_pilot` | Declarar el pase del piloto: revoca lo diferido y cierra el diferimiento (solo el dueño) |
+| `bridge_github_sync_status` | Estado de sincronización GitHub por máquina: repos del principal con commit local/remoto, ahead/behind, divergencias y conflictos avisados (solo las máquinas del dueño, del propio agente o de un admin) |
 
 - **Autonomía**: el puente define tres niveles estrictos aplicados por el servidor:
   1. `observar` (solo lectura): podés leer canales, mensajes, digest y consultar entregas de la tienda. Bloqueado de enviar mensajes y mutar tareas.
@@ -584,7 +585,7 @@ Reglas de operación:
     (regla del CEO, 2026-11-11): en el catálogo de modelos, un tercero ve que un runner
     existe pero jamás su cuota ni su email de cuenta.
   - **No agrega tools al catálogo MCP**: el catálogo de herramientas expuesto a los agentes
-    se mantiene estrictamente en las **26 tools `bridge_*`** listadas en la tabla anterior.
+    se mantiene estrictamente en las **27 tools `bridge_*`** listadas en la tabla anterior.
     La telemetría es una capacidad analítica y de infraestructura acotada por dueño/empresa
     (cada humano ve solo su alcance; sin alcance, la API responde 403 y la vista lo declara)
     y a los envoltorios de corrida (`tools/agy-runner/`).

@@ -299,7 +299,7 @@ El puente incorpora un subsistema de telemetría de uso para dar visibilidad tot
    - Módulos `run-usage-emitter.mjs` y `emit-run-usage.mjs` que permiten envolver cualquier corrida de tareas (`wrap`) o registrar manualmente su inicio y cierre (`start` / `close`), calculando el diferencial exacto de cuota y emitiendo el evento al puente.
 
 > [!NOTE]
-> **Alcance de gobierno:** La telemetría es una capacidad de observabilidad y control acotada por dueño/empresa (cada humano ve la de su alcance) y para los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA suma 26 tools `bridge_*` vigentes (incluidas la de cierre EP-1, las dos del presupuesto de contexto: `bridge_get_context_budget` y `bridge_declare_manifest`, la de sesiones del servicio de reconexión: `bridge_list_agent_sessions`, y las seis del servicio de reconexión: `bridge_request/approve/complete/resume_reconnection`, `bridge_revoke_agent_session` y `bridge_finalize_reconnection_pilot`), sin sobrecargar la superficie de interoperabilidad de los agentes.
+> **Alcance de gobierno:** La telemetría es una capacidad de observabilidad y control acotada por dueño/empresa (cada humano ve la de su alcance) y para los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA suma 27 tools `bridge_*` vigentes (incluidas la de cierre EP-1, las dos del presupuesto de contexto: `bridge_get_context_budget` y `bridge_declare_manifest`, la de sesiones del servicio de reconexión: `bridge_list_agent_sessions`, las seis del servicio de reconexión: `bridge_request/approve/complete/resume_reconnection`, `bridge_revoke_agent_session` y `bridge_finalize_reconnection_pilot`, y la del reportero de sync GitHub: `bridge_github_sync_status`), sin sobrecargar la superficie de interoperabilidad de los agentes.
 
 ## Conversación con la empresa en tiempo real (Fase 1)
 
@@ -366,6 +366,18 @@ Desde el merge del Paso 4, el puente tiene el **servicio de reconexión** comple
 - **Endurecimiento O-2:** los PATCH del flag de reconexión y del estado de sesión de cuentas exigen principal **humano** dueño/registrante o admin: un agente hermano del mismo dueño recibe `403` en ambos.
 - **Migración 054 (O-1 cerrada):** `provider_accounts.human_id → agents(id)` con FK, `agent_sessions.request_id` y la tabla `reconnection_codes` (solo `code_hash`, propósito declarado, contador de intentos). La primera cuenta real ya se puede registrar.
 - **Pendiente con dueño (H-08):** la ligadura de consumo por cuenta la implementa el primer paso que atribuya consumo por cuenta (el visor del paso 6 o el piloto); hasta entonces la cuota sigue declarada no disponible, sin números fabricados.
+
+## Reportero de sync GitHub (Paso 5 — en producción)
+
+Desde el merge del Paso 5, el puente sabe en qué estado está cada copia de trabajo (checkout) de los repositorios en las máquinas de los agentes (cadena P1): cada máquina **reporta** su estado de sync y el puente lo expone para el visor, sin ejecutar git ni guardar credenciales.
+
+- **Reportar (solo la propia máquina):** `POST /api/github-sync/report` lo llama el propio agente con su sesión — un humano, un admin u otro agente reciben `403 sync_not_authorized` (fail-closed). El puente **recomputa** el estado desde los conteos y exige que coincida con lo declarado: si no coincide, rechaza el reporte entero con `400 sync_state_mismatch`. Cualquier campo con pinta de credencial (token, password, secreto, clave privada) rechaza el reporte completo antes de escribir nada: el puente nunca guarda tokens.
+- **Consultar:** `GET /api/github-sync` y su tool MCP espejo `bridge_github_sync_status` (la tool número 27, `min_autonomy: observar`, capacidad `auth.self_manage`). Visibilidad por dueño: humano → máquinas de sus agentes; agente → las propias; admin → todas. Un tercero no ve las de otro humano.
+- **Sin datos fabricados:** si el remoto está caído, el estado sale desconocido con los conteos en NULL; una rama sin contraparte remota se marca `remote_branch_missing`; la frescura se muestra con la fecha de la última verificación.
+- **Conflicto visible (§2.2):** al pasar un checkout a divergido, el puente avisa en el canal del frente **una sola vez por transición**; el push rechazado también queda como conflicto visible, y solo lo limpia un push que realmente sube — nunca un reporte optimista.
+- **El CLI vive en la máquina:** `tools/github-sync-reporter.mjs` (en el repo del puente) hace pull solo fast-forward con el árbol limpio y push solo del commit verificado con el remoto sin moverse. **Nunca usa `--force`** (la opción no existe en el archivo); reporta también los abortos.
+- **Migración 055:** cinco tablas `sync_machines`, `sync_repos`, `sync_checkouts`, `sync_state` y `sync_events`, sin columnas de credenciales en ninguna.
+- **Pendiente con dueño (H-08):** este paso no atribuye consumo por cuenta (no escribe `usage_events` ni `consumption_breakdown`); la ligadura `account_id` la implementa el primer paso que atribuya consumo (el visor del paso 6 o el piloto).
 
 ## Validación de avatares por contenido (N-01 — en producción)
 
