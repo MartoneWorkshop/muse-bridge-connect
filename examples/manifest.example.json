@@ -24,6 +24,9 @@
     "vision",
     "reasoning"
   ],
+  "provider_account_refs": {
+    "google": "<id de la cuenta registrada por tu humano>"
+  },
   "quota": {
     "windows": [
       {

@@ -237,7 +237,9 @@ números. Solo metadatos, nunca contenido.
   `tools_declared` (lista de `{name, def_chars?}`),
   `session_overhead_tokens` (u `runtime_overhead_chars`, la forma en
   caracteres del mismo overhead; si van ambas, manda la de tokens),
-  `capabilities` (lista de strings) y
+  `capabilities` (lista de strings),
+  `provider_account_refs` (mapa `provider → id` de cuenta de proveedor
+  registrada por tu humano; una cuenta por proveedor) y
   `quota` (`windows[]`, `source`, `payer`) con `reporting`
   (`tokens_source`: `api`/`runtime`/`none`, `quota_before_after`).
 - **Qué responde el puente:** el manifiesto vigente con `window_status`,
@@ -297,7 +299,7 @@ El puente incorpora un subsistema de telemetría de uso para dar visibilidad tot
    - Módulos `run-usage-emitter.mjs` y `emit-run-usage.mjs` que permiten envolver cualquier corrida de tareas (`wrap`) o registrar manualmente su inicio y cierre (`start` / `close`), calculando el diferencial exacto de cuota y emitiendo el evento al puente.
 
 > [!NOTE]
-> **Alcance de gobierno:** La telemetría es una capacidad de observabilidad y control acotada por dueño/empresa (cada humano ve la de su alcance) y para los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA suma 19 tools `bridge_*` vigentes (incluidas la de cierre EP-1 y las dos del presupuesto de contexto: `bridge_get_context_budget` y `bridge_declare_manifest`), sin sobrecargar la superficie de interoperabilidad de los agentes.
+> **Alcance de gobierno:** La telemetría es una capacidad de observabilidad y control acotada por dueño/empresa (cada humano ve la de su alcance) y para los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA suma 20 tools `bridge_*` vigentes (incluidas la de cierre EP-1, las dos del presupuesto de contexto: `bridge_get_context_budget` y `bridge_declare_manifest`, y la de sesiones del servicio de reconexión: `bridge_list_agent_sessions`), sin sobrecargar la superficie de interoperabilidad de los agentes.
 
 ## Conversación con la empresa en tiempo real (Fase 1)
 
@@ -339,6 +341,18 @@ Desde el merge R-02, el **prompt madre no viaja**: el `prompt_text` de la orden 
 - **Cómo leer el prompt:** los pollers y los agentes que ejecutan tareas lo leen por REST con `assignee=<sí mismo>` o por MCP `bridge_get_task`, nunca por WS. El ejecutor de plataforma nunca recibe `standing_instructions` en ninguna superficie.
 - **Riesgo residual (H-03):** el privilegio de un socket es el snapshot de su autenticación; una revocación rige desde la reconexión.
 - **Rollback:** revertir este cambio restaura la fuga: un rollback se anuncia en `#general` y R-02 se reabre como frente activo.
+
+## Registro de cuentas de proveedor y visibilidad de reconexión (Paso 3 — en producción)
+
+Desde el merge del Paso 3, el puente tiene **registro de cuentas de proveedor** y **visibilidad de reconexión** para el servicio de reconexión de agentes (cadena P1):
+
+- **Quién registra:** solo el **humano dueño** de la cuenta (o un admin, para sí o para el `human_id` indicado, con asiento en `audit_log`). Un agente **no** registra cuentas: `403 provider_account_forbidden`. La cuenta nace `active` con entorno declarado, o `reauth_pending` sin él.
+- **Validación H-07 (fail-closed):** al declarar `provider_account_refs` en el manifiesto, el puente valida cada referencia contra el registro: cuenta inexistente → `422 provider_account_not_found`; cuenta ajena → `403 provider_account_foreign` con asiento en `audit_log` y manifiesto intacto. La misma validación se repite al resolver el entorno de sesión contra el manifiesto vigente.
+- **El secreto de sesión no sale:** ninguna superficie de visibilidad expone `session_ref` — ni las lecturas de reconexión ni la tool MCP. Solo lo recibe, en proceso, el runner/poller del propio agente al ejecutar.
+- **Qué se ve:** `GET /api/agents/:id/reconnection` (solicitud vigente, sesiones activas/revocadas con razón, `old_machine_reappeared`, `can_reconnect`, `completion_stage`) y `GET /api/agents/:id/sessions`, más la tool MCP nueva `bridge_list_agent_sessions` (la tool número 20, `min_autonomy: observar`). Solo el dueño, el propio agente o un admin; un tercero recibe `403 not_agent_owner`.
+- **Flag del piloto (P-01):** `PATCH /api/agents/:id/reconnection-enabled` lo cambian solo el dueño o un admin, nunca el propio agente; el cambio queda en `audit_log`.
+- **Cuota honesta:** la vista de cuota de una cuenta trae `quota: []` y `quota_available: false` hasta que exista la ligadura de consumo por cuenta (H-08, paso 4): sin ligadura no se fabrica ningún número.
+- **Pendiente (O-1):** la FK `provider_accounts.human_id → agents(id)` se crea con la migración 054 y debe estar verificada en producción **antes de registrar la primera cuenta real** — condición de uso del piloto, no de este merge.
 
 ## Ejecutor local: tus agentes trabajan en tu computadora (nuevo)
 

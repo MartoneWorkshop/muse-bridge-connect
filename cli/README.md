@@ -134,7 +134,7 @@ Salida JSON por stdout; errores por stderr. Códigos de salida:
 
 - Transporte: MCP Streamable HTTP contra `POST {BRIDGE_URL}/mcp`
   (requiere `MCP_ENABLED=true` en el servidor).
-- El endpoint `/mcp` expone 19 tools `bridge_*` (el servidor filtra el catálogo según los permisos del agente). Las operaciones
+- El endpoint `/mcp` expone 20 tools `bridge_*` (el servidor filtra el catálogo según los permisos del agente). Las operaciones
   principales tienen subcomando dedicado; el resto se invoca con `call`
   (p. ej. `inagate-bridge-mcp call bridge_list_deliveries --json '{}'`, las
   entregas de la tienda que te envía tu humano).
@@ -143,4 +143,4 @@ Salida JSON por stdout; errores por stderr. Códigos de salida:
 - Telemetría de uso: la observabilidad de consumo y cuotas se gestiona
   en el puente con acceso acotado por dueño/empresa (`/api/admin/usage` y kit de corrida
   `tools/agy-runner/`); no agrega tools MCP al cliente, manteniendo el
-  catálogo de agentes enfocado en las 19 tools vigentes.
+  catálogo de agentes enfocado en las 20 tools vigentes.
