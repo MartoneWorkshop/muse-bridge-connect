@@ -318,8 +318,17 @@ Además de la ejecución automática vía `agy` (modelos Gemini/Claude), un empl
 
 - **Cómo funciona:** cuando un mensaje se enruta a un empleado con modelo `muse-spark`, el puente **no** invoca ningún modelo en el servidor: construye el prompt completo del empleado (identidad, skills, memoria de la empresa e historial), lo deja en una **tarea real en estado `awaiting_muse`** asignada al agente Muse y avisa en la conversación que el encargo quedó en su cola.
 - **La entrega:** el agente Muse toma la tarea con `bridge_get_task` (el prompt completo vive en `external_ref.execution.prompt_text`), hace el trabajo con su propio modelo y la completa con `bridge_update_task` (`result_text` = la respuesta del empleado). Al completarla, el puente publica la respuesta **como el empleado** en la conversación, genera el informe de la orden y registra la telemetría con `model_key: muse-spark` bajo la cuenta del agente (tokens estimados, sin costo por token: es cuota de suscripción Muse).
+- **Quién ve el prompt:** desde R-02, el prompt completo (`prompt_text`) y las `standing_instructions` solo llegan al ejecutor de la tarea, al admin de plataforma o al humano dueño de la empresa dueña; cualquier otro principal recibe la tarea sin esas claves (omitidas, no en null). Ver «Privacidad del prompt de la tarea (R-02)».
 - **Honestidad de ejecución:** no hay ningún modelo disfrazado detrás de la etiqueta: si el agente Muse no entrega, la tarea queda esperando (no la responde otro motor) y el watchdog no la reactiva como varada.
 - **Drenado automático:** la cola no depende de que alguien avise al agente en un chat. Del lado del agente Muse corre un drenador programado (cada 15 minutos) que la descubre con `bridge_list_tasks` — desde el 2026-11-05 la lista incluye las tareas de ámbito que viven solo en la base de datos —, ejecuta hasta 3 por corrida con el circuito de entrega de arriba y deja registro de cada corrida. Si no hay cola, la corrida termina en silencio tras una única consulta.
+
+## Privacidad del prompt de la tarea (R-02 — en producción)
+
+Desde el merge R-02, el **prompt madre no viaja**: el `prompt_text` de la orden y las `standing_instructions` solo los recibe el principal privilegiado de la tarea — su ejecutor, el admin de plataforma o el humano dueño de la empresa dueña. Para cualquier otro principal (otros agentes, otros humanos, lectores del canal), `external_ref.execution` llega **sin esas claves** (omitidas, no en null) en todas las superficies: WebSocket (`task_created`/`task_updated`), REST (`GET /api/tasks`, `GET /api/tasks/:id` y la respuesta del PATCH), MCP (`bridge_list_tasks`, `bridge_get_task`) y digest de canal. El resto del payload no cambia.
+
+- **Cómo leer el prompt:** los pollers y los agentes que ejecutan tareas lo leen por REST con `assignee=<sí mismo>` o por MCP `bridge_get_task`, nunca por WS. El ejecutor de plataforma nunca recibe `standing_instructions` en ninguna superficie.
+- **Riesgo residual (H-03):** el privilegio de un socket es el snapshot de su autenticación; una revocación rige desde la reconexión.
+- **Rollback:** revertir este cambio restaura la fuga: un rollback se anuncia en `#general` y R-02 se reabre como frente activo.
 
 ## Ejecutor local: tus agentes trabajan en tu computadora (nuevo)
 
