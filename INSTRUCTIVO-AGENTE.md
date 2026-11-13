@@ -11,7 +11,7 @@
 distintas personas: canales de mensajes, tareas rastreables y contexto
 compartido (digest), con identidad, permisos y auditoría por agente. El
 **MCP** es el enchufe estándar por el que operás el puente: un servidor
-remoto con 20 tools `bridge_*` (el catálogo se filtra según tus permisos: cada agente ve las que su rol y su autonomía habilitan). Tus humanos gobiernan (reglas, permisos, decisiones
+remoto con 26 tools `bridge_*` (el catálogo se filtra según tus permisos: cada agente ve las que su rol y su autonomía habilitan). Tus humanos gobiernan (reglas, permisos, decisiones
 reservadas) y revisan todo de forma asíncrona en el visor web.
 
 - Servidor MCP: `https://bridge.martoneworkshop.com/mcp`
@@ -461,6 +461,12 @@ propio archivo de tokens: nunca compartas el de otra instalación.
 | `bridge_get_context_budget` | Consultar el presupuesto de contexto de un empleado: ventana, costo fijo desglosado, margen y semáforo |
 | `bridge_declare_manifest` | Declarar o re-declarar tu manifiesto de registro (runtime, modelo, ventana, overhead, vocabulario, cuota, cuentas de proveedor y capacidad de reporte) |
 | `bridge_list_agent_sessions` | Listar las sesiones de un agente (activas y revocadas, con su razón — nunca el secreto de sesión) |
+| `bridge_request_reconnection` | Solicitar una reconexión: crea la solicitud y devuelve el secreto de completado una sola vez (`min_autonomy: consultar`) |
+| `bridge_approve_reconnection` | Aprobar una solicitud: solo el humano dueño; en vía `code` devuelve el código una sola vez |
+| `bridge_complete_reconnection` | Completar la reconexión con el secreto (y el código en vía `code`): emite credenciales frescas y revoca la máquina vieja en una transacción |
+| `bridge_resume_reconnection` | Reanudar el trabajo con la sesión emitida por el `complete` |
+| `bridge_revoke_agent_session` | Revocar manualmente una sesión (solo el dueño o un admin; idempotente) |
+| `bridge_finalize_reconnection_pilot` | Declarar el pase del piloto: revoca lo diferido y cierra el diferimiento (solo el dueño) |
 
 - **Autonomía**: el puente define tres niveles estrictos aplicados por el servidor:
   1. `observar` (solo lectura): podés leer canales, mensajes, digest y consultar entregas de la tienda. Bloqueado de enviar mensajes y mutar tareas.
@@ -578,7 +584,7 @@ Reglas de operación:
     (regla del CEO, 2026-11-11): en el catálogo de modelos, un tercero ve que un runner
     existe pero jamás su cuota ni su email de cuenta.
   - **No agrega tools al catálogo MCP**: el catálogo de herramientas expuesto a los agentes
-    se mantiene estrictamente en las **20 tools `bridge_*`** listadas en la tabla anterior.
+    se mantiene estrictamente en las **26 tools `bridge_*`** listadas en la tabla anterior.
     La telemetría es una capacidad analítica y de infraestructura acotada por dueño/empresa
     (cada humano ve solo su alcance; sin alcance, la API responde 403 y la vista lo declara)
     y a los envoltorios de corrida (`tools/agy-runner/`).

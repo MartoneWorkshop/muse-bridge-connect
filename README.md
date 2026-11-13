@@ -299,7 +299,7 @@ El puente incorpora un subsistema de telemetría de uso para dar visibilidad tot
    - Módulos `run-usage-emitter.mjs` y `emit-run-usage.mjs` que permiten envolver cualquier corrida de tareas (`wrap`) o registrar manualmente su inicio y cierre (`start` / `close`), calculando el diferencial exacto de cuota y emitiendo el evento al puente.
 
 > [!NOTE]
-> **Alcance de gobierno:** La telemetría es una capacidad de observabilidad y control acotada por dueño/empresa (cada humano ve la de su alcance) y para los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA suma 20 tools `bridge_*` vigentes (incluidas la de cierre EP-1, las dos del presupuesto de contexto: `bridge_get_context_budget` y `bridge_declare_manifest`, y la de sesiones del servicio de reconexión: `bridge_list_agent_sessions`), sin sobrecargar la superficie de interoperabilidad de los agentes.
+> **Alcance de gobierno:** La telemetría es una capacidad de observabilidad y control acotada por dueño/empresa (cada humano ve la de su alcance) y para los administradores del puente. **No es una tool MCP nueva para agentes**: el catálogo de herramientas para agentes de IA suma 26 tools `bridge_*` vigentes (incluidas la de cierre EP-1, las dos del presupuesto de contexto: `bridge_get_context_budget` y `bridge_declare_manifest`, la de sesiones del servicio de reconexión: `bridge_list_agent_sessions`, y las seis del servicio de reconexión: `bridge_request/approve/complete/resume_reconnection`, `bridge_revoke_agent_session` y `bridge_finalize_reconnection_pilot`), sin sobrecargar la superficie de interoperabilidad de los agentes.
 
 ## Conversación con la empresa en tiempo real (Fase 1)
 
@@ -352,7 +352,20 @@ Desde el merge del Paso 3, el puente tiene **registro de cuentas de proveedor** 
 - **Qué se ve:** `GET /api/agents/:id/reconnection` (solicitud vigente, sesiones activas/revocadas con razón, `old_machine_reappeared`, `can_reconnect`, `completion_stage`) y `GET /api/agents/:id/sessions`, más la tool MCP nueva `bridge_list_agent_sessions` (la tool número 20, `min_autonomy: observar`). Solo el dueño, el propio agente o un admin; un tercero recibe `403 not_agent_owner`.
 - **Flag del piloto (P-01):** `PATCH /api/agents/:id/reconnection-enabled` lo cambian solo el dueño o un admin, nunca el propio agente; el cambio queda en `audit_log`.
 - **Cuota honesta:** la vista de cuota de una cuenta trae `quota: []` y `quota_available: false` hasta que exista la ligadura de consumo por cuenta (H-08, paso 4): sin ligadura no se fabrica ningún número.
-- **Pendiente (O-1):** la FK `provider_accounts.human_id → agents(id)` se crea con la migración 054 y debe estar verificada en producción **antes de registrar la primera cuenta real** — condición de uso del piloto, no de este merge.
+- **O-1 resuelta en el Paso 4:** la FK `provider_accounts.human_id → agents(id)` existe en producción desde la migración 054 (merge del Paso 4): la primera cuenta real ya se puede registrar. La cuota por cuenta (H-08) sigue sin atribuirse hasta que exista su ligadura de consumo.
+
+## Servicio de reconexión (Paso 4 — en producción)
+
+Desde el merge del Paso 4, el puente tiene el **servicio de reconexión** completo (cadena P1): la máquina nueva de un agente se presenta, el humano dueño aprueba, y al completar, la máquina vieja queda revocada entera en una sola transacción.
+
+- **Flujo:** `request` → `approve` → `complete` → `resume` (§4.1–§4.4 del contrato), revocación manual (§4.6) y cierre del piloto (§4.7). Endpoints REST `POST /api/reconnection/request`, `POST /api/reconnection/approve`, `POST /api/reconnection/complete`, `POST /api/reconnection/resume`, `POST /api/reconnection/revoke-session` y `POST /api/reconnection/finalize-pilot`, con sus 6 tools MCP espejo (las tools 21 a 26, `min_autonomy: consultar`, capacidad `auth.self_manage`).
+- **Secreto de un solo uso (H-01):** el `request` devuelve el secreto de completado **una sola vez**; en base queda solo su SHA-256. Reusarlo → `409 completion_secret_already_used` y nunca emite credenciales. El código del dueño (vía `code`, 10 caracteres Crockford) también es de un solo uso y en base vive solo su hash, referenciado por `code_ref`.
+- **Solo el humano dueño aprueba:** `approve` lo hace el humano dueño del agente; admin, el propio agente y terceros reciben `403 not_agent_owner`. El `complete` se ejecuta sin sesión (con sesión del agente → `403 session_already_active_for_agent`).
+- **Enmienda CF-01:** repetir `approve` sin marca es idempotente y no reemite nada; `approve` con `reissue_code: true` del dueño invalida el código anterior y emite uno nuevo **sin extender `APPROVAL_WINDOW`** (ventana vencida → `410`).
+- **Revocación atómica en producción:** el `complete` revoca sesiones, familias de refresh y access tokens viejos de la máquina vieja en la misma transacción; las demás solicitudes vigentes quedan `superseded`. En el piloto, la revocación se difiere solo en staging y solo para `agy`/`agy_salem` (P-03, impuesto por entorno), y se cierra con `finalize-pilot` o con el rollback al apagar el flag.
+- **Endurecimiento O-2:** los PATCH del flag de reconexión y del estado de sesión de cuentas exigen principal **humano** dueño/registrante o admin: un agente hermano del mismo dueño recibe `403` en ambos.
+- **Migración 054 (O-1 cerrada):** `provider_accounts.human_id → agents(id)` con FK, `agent_sessions.request_id` y la tabla `reconnection_codes` (solo `code_hash`, propósito declarado, contador de intentos). La primera cuenta real ya se puede registrar.
+- **Pendiente con dueño (H-08):** la ligadura de consumo por cuenta la implementa el primer paso que atribuya consumo por cuenta (el visor del paso 6 o el piloto); hasta entonces la cuota sigue declarada no disponible, sin números fabricados.
 
 ## Validación de avatares por contenido (N-01 — en producción)
 
