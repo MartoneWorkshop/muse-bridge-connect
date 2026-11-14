@@ -386,6 +386,20 @@ Desde Fase B, el puente gobierna el ciclo de vida de cada tarea con una sola má
 - **Nacimiento solo por orden con intención:** las tareas nacen únicamente de una orden con intención — de un humano (o del despachante de confianza) por texto o por metadata, o de una creación explícita de tarea. Los avisos del sistema no nacen como tarea, ejecutar un mensaje que no es una orden no acuña una, y referenciar un `task_id` en un mensaje no crea una tarea. Cada orden de ámbito se acuña una sola vez (deduplicación por orden + mensaje).
 - **Cierre único EP-1:** completar exige el informe de cierre EP-1 (ver Estándar de entrega EP-1); `failed`, `cancelled` y `dead_letter` cierran con motivo, sin informe. El cierre de una convocatoria transiciona su estado en la misma transacción que el cierre de su tarea.
 
+## Claim de tareas por empleado — endpoint REST (BUG-017, en compuerta)
+
+`POST /api/tasks/:id/claim` — la pieza de servidor que faltaba de la decisión **«Crear = orden»**: una tarea entrante (`pending`/`queued`) **sin responsable efectivo** la toma un empleado habilitado y pasa a `running` con el sello de ejecución de su ejecutor registrado (`awaiting_<motor>` + `platform_executor` si es ejecutor de plataforma; `awaiting_agent` si no), lista para la cola de ese ejecutor. Hasta acá, el front no tenía forma de hacerlo: el `PATCH /api/tasks/:id` solo transiciona estados entre asignado y solicitante, y el `bridge_claim_task` de MCP es la auto-asignación del agente en el pool comunitario (sin empleado).
+
+Contrato:
+
+- **Cuerpo:** `{ employee_id, company_id?, action_request_id? }`. El llamador es un **agente** que actúa por el empleado: el humano dueño a través de su agente vinculado, el `executor_agent_id` o el `base_agent_id` del empleado, o el agente de confianza de la empresa (validación `validateEmployeeLink`). Las cuentas humanas acompañantes no mutan por API (guarda F-IMP-3): el humano ordena y aprueba; ejecuta su agente.
+- **Alcance por empresa:** si la empresa de la tarea se resuelve (cuerpo, `external_ref.company_id` o conversación de ámbito), el empleado debe ser **miembro** de esa empresa; si no, 403.
+- **Doctrina `consultar`:** sin ticket, responde 403 `approval_required` y crea la action request `tasks.claim` con payload `{task_id, employee_id}` (la aprobación ata la tarea **y** quién la trabaja; un ticket del pool MCP no sirve en esta superficie). Con el ticket aprobado, el claim se ejecuta y la request queda `executed`.
+- **Conflictos:** tarea ya asignada/enrutada → 409 `already_claimed` (tomar trabajo de otro **no** está habilitado); en curso o terminal → 409 `task_not_claimable`; ejecutor del empleado no resoluble desde el registro → 422.
+- **Auditoría:** asiento `task.claim` en `audit_log` con empleado, empresa y ejecutor; aviso en el canal de la tarea y broadcast `task_updated`.
+
+Estado: rama `feat/claim-endpoint-bug017` del puente (suite `tests/test_claim_endpoint_suite.js`, 14/14 contra `bridge_staging`, residuo 0). **Pendiente de contrafirma y merge — todavía no está en producción.**
+
 ## Autodispatcher — configuración por empresa acotada (O2, en producción)
 
 La configuración del autodispatcher (pesos de señales, frases personalizadas y agente juez) es **por empresa** y el poller la aplica acotada a la empresa de cada tarea (main `5703ba0`):
